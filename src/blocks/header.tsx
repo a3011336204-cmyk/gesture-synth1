@@ -1,12 +1,75 @@
-import { m } from '@/paraglide/messages.js';
-import { SiteHeader } from '@/components/site-header';
+'use client';
+
+import { useState } from 'react';
+import { AudioWaveform, Menu, X } from 'lucide-react';
+
+import { envConfigs } from '@/config';
+
+const NAVIGATION = [
+  { href: '#features', label: 'Features' },
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '#technology', label: 'Technology' },
+  { href: '#faq', label: 'FAQ' },
+] as const;
 
 export function Header() {
-  const navLinks = [
-    { href: '/#features', label: m['landing.nav.features']() },
-    { href: '/pricing', label: m['landing.nav.pricing']() },
-    { href: '/blog', label: m['landing.nav.blog']() },
-  ];
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  return <SiteHeader navLinks={navLinks} />;
+  return (
+    <header className="absolute inset-x-0 top-0 z-50 text-white">
+      <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
+        <a href="/" className="flex items-center gap-2.5" aria-label="Home">
+          <span className="grid size-9 place-items-center rounded-full border border-white/35 bg-black/10 backdrop-blur">
+            <AudioWaveform className="size-5" strokeWidth={1.8} />
+          </span>
+          <span className="text-base font-semibold sm:text-lg">
+            {envConfigs.app_name}
+          </span>
+        </a>
+
+        <nav
+          className="hidden items-center gap-8 md:flex"
+          aria-label="Main navigation"
+        >
+          {NAVIGATION.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="text-sm font-medium text-white/75 transition-colors hover:text-white"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          className="grid size-10 place-items-center rounded-full border border-white/30 bg-black/10 backdrop-blur md:hidden"
+          aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <nav
+          className="mx-4 rounded-md border border-white/20 bg-[#071725]/96 p-3 shadow-2xl backdrop-blur md:hidden"
+          aria-label="Mobile navigation"
+        >
+          {NAVIGATION.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className="block rounded px-3 py-3 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      )}
+    </header>
+  );
 }

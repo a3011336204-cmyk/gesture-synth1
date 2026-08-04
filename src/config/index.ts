@@ -16,9 +16,12 @@ const publicEnv = (key: string) => metaEnv[key] ?? procEnv[key];
 export const envConfigs: Record<string, string> = {
   // App (public)
   app_url: publicEnv('VITE_APP_URL') ?? 'http://localhost:3000',
-  app_name: publicEnv('VITE_APP_NAME') ?? 'ShipAny',
-  app_description: publicEnv('VITE_APP_DESCRIPTION') ?? 'Ship your SaaS faster',
-  app_logo: publicEnv('VITE_APP_LOGO') ?? '/logo.svg',
+  app_name: publicEnv('VITE_APP_NAME') ?? 'Gesture Synth',
+  app_description:
+    publicEnv('VITE_APP_DESCRIPTION') ??
+    'Make music with both hands in a free, private browser instrument.',
+  plausible_domain: publicEnv('VITE_PLAUSIBLE_DOMAIN') ?? '',
+  plausible_src: publicEnv('VITE_PLAUSIBLE_SRC') ?? '',
 
   // Database
   database_url: procEnv.DATABASE_URL ?? '',
@@ -77,7 +80,4 @@ export const envConfigs: Record<string, string> = {
   // OPENAI_API_KEY / ANTHROPIC_API_KEY are common ambient vars, and falling back
   // to them would let the admin "Test" silently pass on the machine's own key.
   replicate_api_token: procEnv.REPLICATE_API_TOKEN ?? '',
-
-  // Locale (public)
-  locale: publicEnv('VITE_DEFAULT_LOCALE') ?? 'en',
 };

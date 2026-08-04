@@ -2,8 +2,6 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { MDXProvider } from '@mdx-js/react';
 import { ArrowLeft } from 'lucide-react';
 
-import { Link } from '@/core/i18n/navigation';
-import { m } from '@/paraglide/messages.js';
 import { mdxComponents } from '@/components/mdx-components';
 
 export const Route = createFileRoute('/(pages)')({
@@ -12,17 +10,17 @@ export const Route = createFileRoute('/(pages)')({
 
 function PagesLayout() {
   return (
-    <div className="bg-background min-h-screen">
-      <div className="mx-auto max-w-3xl px-6 pt-8 md:px-8">
-        <Link
+    <div className="min-h-screen bg-[#f4f8f7]">
+      <div className="mx-auto max-w-3xl px-5 pt-8 sm:px-8">
+        <a
           href="/"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#137b75] hover:text-[#0b5550]"
         >
           <ArrowLeft className="size-4" />
-          {m['common.pages.back_to_home']()}
-        </Link>
+          Back to Gesture Synth
+        </a>
       </div>
-      <div className="mx-auto max-w-3xl px-6 pt-6 pb-12 md:px-8 md:pt-8 md:pb-16">
+      <div className="mx-auto max-w-3xl px-5 pt-8 pb-16 sm:px-8 sm:pt-10 sm:pb-20">
         <MDXProvider components={mdxComponents}>
           <Outlet />
         </MDXProvider>

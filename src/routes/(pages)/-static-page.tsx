@@ -2,8 +2,6 @@ import type { ComponentType } from 'react';
 import { notFound, useLoaderData } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
-import { m } from '@/paraglide/messages.js';
-import { baseLocale, getLocale, localizeUrl } from '@/paraglide/runtime.js';
 
 type PageMeta = {
   title: string;
@@ -16,46 +14,36 @@ type PageModule = {
   meta: PageMeta;
 };
 
-// Eagerly bundle the static content pages (small legal/info MDX files).
-// Keys are absolute from the project root.
-const pages = import.meta.glob<PageModule>('/src/content/pages/*.mdx', {
+const pages = import.meta.glob<PageModule>('/src/content/pages/*.en.mdx', {
   eager: true,
 });
 
-function loadPage(slug: string, locale: string): PageModule | null {
-  return (
-    pages[`/src/content/pages/${slug}.${locale}.mdx`] ??
-    pages[`/src/content/pages/${slug}.${baseLocale}.mdx`] ??
-    null
-  );
+function loadPage(slug: string): PageModule | null {
+  return pages[`/src/content/pages/${slug}.en.mdx`] ?? null;
 }
 
-type LoaderData = { meta: PageMeta; slug: string; locale: string };
+type LoaderData = { meta: PageMeta; slug: string };
 
-// Shared route options for static MDX pages. Each page gets its own
-// explicit route file (e.g. privacy-policy.tsx) so static segments
-// always outrank dynamic ones — add a new page by creating the MDX
-// content plus a thin route file using this factory.
 export function staticPageRouteOptions(slug: string) {
   return {
     loader: (): LoaderData => {
-      const locale = getLocale();
-      const page = loadPage(slug, locale);
+      const page = loadPage(slug);
       if (!page) throw notFound();
-      return { meta: page.meta, slug, locale };
+      return { meta: page.meta, slug };
     },
     head: ({ loaderData }: { loaderData?: LoaderData }) => {
       if (!loaderData) return {};
-      const { meta, locale } = loaderData;
-      const canonical = localizeUrl(`${envConfigs.app_url}/${slug}`, {
-        locale: locale as ReturnType<typeof getLocale>,
-      }).href;
       return {
         meta: [
-          { title: meta.title },
-          { name: 'description', content: meta.description },
+          { title: `${loaderData.meta.title} | ${envConfigs.app_name}` },
+          { name: 'description', content: loaderData.meta.description },
         ],
-        links: [{ rel: 'canonical', href: canonical }],
+        links: [
+          {
+            rel: 'canonical',
+            href: new URL(`/${slug}`, envConfigs.app_url).href,
+          },
+        ],
       };
     },
     component: StaticPage,
@@ -63,25 +51,26 @@ export function staticPageRouteOptions(slug: string) {
 }
 
 function StaticPage() {
-  const { meta, slug, locale } = useLoaderData({
-    strict: false,
-  }) as LoaderData;
-
-  const page = loadPage(slug, locale)!;
+  const { meta, slug } = useLoaderData({ strict: false }) as LoaderData;
+  const page = loadPage(slug);
+  if (!page) throw new Error(`English static page is missing: ${slug}`);
   const Content = page.default;
 
   return (
     <article>
-      <header className="border-border mb-6 border-b pb-5">
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight md:text-4xl">
+      <header className="mb-8 border-b border-[#c7d5d3] pb-6">
+        <p className="font-mono text-xs font-semibold text-[#137b75] uppercase">
+          Gesture Synth
+        </p>
+        <h1 className="mt-3 text-3xl font-bold text-[#17292c] md:text-4xl">
           {meta.title}
         </h1>
-        <p className="text-muted-foreground mt-2 text-sm">{meta.description}</p>
-        <p className="text-muted-foreground mt-2 text-xs">
-          {m['common.pages.last_updated']()}: {meta.updated_at}
+        <p className="mt-3 text-sm text-[#5b7073]">{meta.description}</p>
+        <p className="mt-3 text-xs text-[#75878a]">
+          Last updated: {meta.updated_at}
         </p>
       </header>
-      <div className="text-foreground/90 text-[15px] leading-7">
+      <div className="text-[15px] leading-7 text-[#344c50]">
         <Content />
       </div>
     </article>

@@ -9,17 +9,10 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from '@tanstack/react-router';
-import { createServerFn } from '@tanstack/react-start';
-import { ThemeProvider } from 'next-themes';
 
 import { envConfigs } from '@/config';
 import { getQueryClient } from '@/lib/query-client';
-import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
-import { Ads } from '@/components/analytics/ads';
-import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { Plausible } from '@/components/analytics/plausible';
-import { CustomerService } from '@/components/customer-service';
-import { GoogleOneTap } from '@/components/google-one-tap';
 import { SandboxPreviewBridge } from '@/components/sandbox-preview-bridge';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -29,61 +22,23 @@ import '@fontsource/libre-baskerville/700.css';
 import '@fontsource/libre-baskerville/400-italic.css';
 import '@/styles/globals.css';
 
-// Analytics IDs live in the DB config (1h-cached service). Fetched via a
-// server function so drizzle/db code never reaches the client bundle.
-const getAnalyticsConfigs = createServerFn().handler(async () => {
-  const { getAllConfigs } = await import('@/modules/config/service');
-  const configs = await getAllConfigs();
-  return {
-    gaId: configs.google_analytics_id?.trim() || '',
-    plausibleDomain: configs.plausible_domain?.trim() || '',
-    plausibleSrc: configs.plausible_src?.trim() || '',
-    adsenseCode: configs.adsense_code?.trim() || '',
-    crispWebsiteId:
-      configs.crisp_enabled === 'true'
-        ? configs.crisp_website_id?.trim() || ''
-        : '',
-    tawkPropertyId:
-      configs.tawk_enabled === 'true'
-        ? configs.tawk_property_id?.trim() || ''
-        : '',
-    tawkWidgetId:
-      configs.tawk_enabled === 'true'
-        ? configs.tawk_widget_id?.trim() || ''
-        : '',
-  };
-});
-
 export const Route = createRootRoute({
-  loader: () => getAnalyticsConfigs(),
-  head: () => {
-    // head() runs on the SSR server AND again on the client during hydration.
-    // On the client, app_url falls back to the localhost dev default when
-    // VITE_APP_URL wasn't inlined into the client bundle at build — which would
-    // emit a second, localhost set of hreflang links. Prefer the live origin
-    // on the client so it always matches; the server uses the configured URL.
-    const appUrl =
-      (typeof window !== 'undefined' && window.location?.origin) ||
-      envConfigs.app_url ||
-      '';
-    return {
-      meta: [
-        { charSet: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { title: envConfigs.app_name },
-        { name: 'description', content: envConfigs.app_description },
-      ],
-      links: [
-        { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
-        { rel: 'apple-touch-icon', href: '/favicon.svg' },
-        ...locales.map((loc) => ({
-          rel: 'alternate',
-          hrefLang: loc,
-          href: localizeUrl(`${appUrl}/`, { locale: loc }).href,
-        })),
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { charSet: 'utf-8' },
+      {
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+      },
+      { title: envConfigs.app_name },
+      { name: 'description', content: envConfigs.app_description },
+      { name: 'google', content: 'notranslate' },
+    ],
+    links: [
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', href: '/logo.svg' },
+    ],
+  }),
   component: RootComponent,
   shellComponent: RootDocument,
   notFoundComponent: NotFound,
@@ -91,36 +46,17 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const analytics = Route.useLoaderData();
-
   return (
     <QueryClientProvider client={getQueryClient()}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <Outlet />
-        <SandboxPreviewBridge />
-        <Toaster position="top-center" richColors />
-        <GoogleOneTap />
-        {analytics?.gaId ? (
-          <GoogleAnalytics measurementId={analytics.gaId} />
-        ) : null}
-        {analytics?.plausibleDomain || analytics?.plausibleSrc ? (
-          <Plausible
-            domain={analytics.plausibleDomain}
-            src={analytics.plausibleSrc || undefined}
-          />
-        ) : null}
-        {analytics?.adsenseCode ? <Ads code={analytics.adsenseCode} /> : null}
-        <CustomerService
-          crispWebsiteId={analytics?.crispWebsiteId || undefined}
-          tawkPropertyId={analytics?.tawkPropertyId || undefined}
-          tawkWidgetId={analytics?.tawkWidgetId || undefined}
+      <Outlet />
+      <SandboxPreviewBridge />
+      <Toaster position="top-center" richColors />
+      {envConfigs.plausible_domain || envConfigs.plausible_src ? (
+        <Plausible
+          domain={envConfigs.plausible_domain || undefined}
+          src={envConfigs.plausible_src || undefined}
         />
-      </ThemeProvider>
+      ) : null}
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
@@ -128,7 +64,7 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang={getLocale()} suppressHydrationWarning>
+    <html lang="en" translate="no" className="notranslate">
       <head>
         <HeadContent />
       </head>
@@ -142,11 +78,11 @@ function RootDocument({ children }: { children: ReactNode }) {
 
 function NotFound() {
   return (
-    <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-6xl font-bold">404</h1>
-      <p className="text-muted-foreground">Page not found</p>
-      <a href="/" className="text-sm underline underline-offset-4">
-        Back to home
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#f4f8f7] px-5 text-[#17292c]">
+      <p className="font-mono text-xs text-[#137b75]">404</p>
+      <h1 className="text-4xl font-bold">Page not found</h1>
+      <a href="/" className="text-sm font-semibold text-[#137b75] underline">
+        Back to Gesture Synth
       </a>
     </div>
   );
@@ -154,20 +90,20 @@ function NotFound() {
 
 function RootError({ error, reset }: ErrorComponentProps) {
   return (
-    <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-4xl font-bold">Oops</h1>
-      <p className="text-muted-foreground">
-        Something went wrong. Please try again.
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#f4f8f7] px-5 text-center text-[#17292c]">
+      <h1 className="text-3xl font-bold">Something went wrong</h1>
+      <p className="max-w-md text-sm text-[#5b7073]">
+        The page could not finish loading. Try again.
       </p>
       {import.meta.env.DEV && error instanceof Error && (
-        <pre className="bg-muted mt-2 max-w-lg overflow-auto rounded p-4 text-xs">
+        <pre className="mt-2 max-w-lg overflow-auto rounded bg-white p-4 text-left text-xs">
           {error.message}
         </pre>
       )}
       <button
         type="button"
         onClick={reset}
-        className="text-sm underline underline-offset-4"
+        className="mt-2 rounded-md bg-[#137b75] px-5 py-2.5 text-sm font-semibold text-white"
       >
         Try again
       </button>
