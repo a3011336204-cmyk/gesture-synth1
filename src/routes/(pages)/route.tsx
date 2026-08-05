@@ -13,11 +13,11 @@ function PagesLayout() {
     <div className="min-h-screen bg-[#f4f8f7]">
       <div className="mx-auto max-w-3xl px-5 pt-8 sm:px-8">
         <a
-          href="/"
+          href="/#play"
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#137b75] hover:text-[#0b5550]"
         >
           <ArrowLeft className="size-4" />
-          Back to Gesture Synth
+          Open Gesture Synth
         </a>
       </div>
       <div className="mx-auto max-w-3xl px-5 pt-8 pb-16 sm:px-8 sm:pt-10 sm:pb-20">

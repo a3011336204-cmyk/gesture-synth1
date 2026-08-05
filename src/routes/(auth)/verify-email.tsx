@@ -299,5 +299,8 @@ function VerifyEmailPage() {
 }
 
 export const Route = createFileRoute('/(auth)/verify-email')({
+  head: () => ({
+    meta: [{ name: 'robots', content: 'noindex,follow' }],
+  }),
   component: VerifyEmailPage,
 });

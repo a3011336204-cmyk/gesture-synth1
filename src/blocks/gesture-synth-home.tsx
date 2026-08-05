@@ -36,7 +36,7 @@ const FEATURES = [
     icon: ShieldCheck,
     title: 'Private by design',
     description:
-      'Camera frames, microphone audio, synth audio, hand landmarks, and recordings stay local and are never uploaded. The camera starts only after you select Start playing, and ordinary playing does not request microphone access.',
+      'Camera frames, microphone audio, synth audio, hand landmarks, and recordings stay local and are never uploaded. Gesture Synth requests camera access when the homepage opens, while microphone access is requested only when you choose Record.',
   },
 ] as const;
 
@@ -45,10 +45,11 @@ const FIRST_CHORD_STEPS = [
     icon: Camera,
     number: '01',
     label: 'Set up',
-    title: 'Start playing',
+    title: 'Allow the camera',
     description:
-      'Click Start playing, then allow camera access when your browser asks. Keep both hands in view, use clear lighting, and leave enough room to move comfortably. You can stop camera access later by closing the page or changing browser permissions.',
-    practiceNote: 'Both hands are needed before the instrument can make sound.',
+      'Gesture Synth requests camera access when the homepage opens. Allow it to see the live preview while local hand tracking loads, then click or tap Tap for sound once. Keep both hands in view, use clear lighting, and leave enough room to move comfortably.',
+    practiceNote:
+      'Sound needs one click or touch, and both hands are needed to play a chord.',
     image: '/images/gesture-synth-tutorial-start.jpg',
     imageAlt:
       'Music lover seated at a laptop with both hands comfortably visible in front of the camera',
@@ -127,7 +128,7 @@ export const FAQ_ITEMS = [
   {
     question: 'Is Gesture Synth really free?',
     answer:
-      'Yes. The instrument is free to use and does not require an account, subscription, or payment method. After you start the instrument, choose a key and sound from the controls in the stage.',
+      'Yes. The instrument is free to use and does not require an account, subscription, or payment method. After the camera preview appears and hand tracking is ready, choose a key and sound from the stage controls, then click or tap Tap for sound once.',
   },
   {
     question: 'Does my camera footage leave my device?',
@@ -161,13 +162,31 @@ export function GestureSynthHome() {
     <>
       <section
         id="play"
-        className="relative isolate overflow-hidden bg-[#176a98] bg-cover bg-center text-white"
-        style={{
-          backgroundImage: "url('/images/gesture-synth-landscape.jpg')",
-        }}
+        className="relative isolate overflow-hidden bg-[#176a98] text-white"
       >
-        <div className="absolute inset-0 -z-10 bg-[#0b5e91]/60" />
-        <div className="mx-auto max-w-[1440px] px-4 pt-28 pb-12 sm:px-8 sm:pt-32 sm:pb-16 lg:px-12">
+        <picture
+          className="pointer-events-none absolute inset-0 z-0"
+          aria-hidden="true"
+        >
+          <source
+            type="image/avif"
+            srcSet="/images/gesture-synth-landscape-960.avif 960w, /images/gesture-synth-landscape-1600.avif 1600w"
+            sizes="100vw"
+          />
+          <img
+            src="/images/gesture-synth-landscape-1600.jpg"
+            srcSet="/images/gesture-synth-landscape-960.jpg 960w, /images/gesture-synth-landscape-1600.jpg 1600w"
+            sizes="100vw"
+            width={1600}
+            height={1067}
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+            className="size-full object-cover object-center"
+          />
+        </picture>
+        <div className="pointer-events-none absolute inset-0 z-10 bg-[#0b5e91]/60" />
+        <div className="relative z-20 mx-auto max-w-[1440px] px-4 pt-28 pb-12 sm:px-8 sm:pt-32 sm:pb-16 lg:px-12">
           <div className="mx-auto max-w-5xl text-center">
             <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 backdrop-blur">
               <Sparkles className="size-3.5 text-[#a9fff6]" />
@@ -181,8 +200,10 @@ export function GestureSynthHome() {
             </p>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
               Use both hands to shape harmony, chord voicing, octave, volume,
-              and filter in real time. When an idea clicks, record a short local
-              performance without creating an account.
+              and filter in real time. The camera request appears when this page
+              opens; after the live preview appears, tap once to enable sound.
+              When an idea clicks, record a short local performance without
+              creating an account.
             </p>
           </div>
 
@@ -349,11 +370,12 @@ export function GestureSynthHome() {
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-white/64">
-              Start playing, make an I major chord with your left hand, then add
-              a root-position voice with your right. This is the shortest path
-              from camera permission to a playable sound. Let the visual readout
-              settle before changing the next gesture; it makes the connection
-              between movement and music easier to hear.
+              Allow camera access, tap once for sound, make an I major chord
+              with your left hand, then add a root-position voice with your
+              right. This is the shortest path from camera permission to a
+              playable sound. Let the visual readout settle before changing the
+              next gesture; it makes the connection between movement and music
+              easier to hear.
             </p>
           </div>
 
@@ -648,8 +670,8 @@ export function GestureSynthHome() {
               Put your hands in frame and make the first chord.
             </h2>
             <p className="mt-4 text-base leading-7 text-white/80">
-              No account is required. Camera access begins only after you start
-              the instrument.
+              No account is required. Camera access is requested as the homepage
+              opens; sound starts after one click or touch.
             </p>
           </div>
 

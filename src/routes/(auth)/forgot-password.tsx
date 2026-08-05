@@ -168,5 +168,8 @@ function ForgotPasswordPage() {
 }
 
 export const Route = createFileRoute('/(auth)/forgot-password')({
+  head: () => ({
+    meta: [{ name: 'robots', content: 'noindex,follow' }],
+  }),
   component: ForgotPasswordPage,
 });

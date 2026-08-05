@@ -97,5 +97,8 @@ function AuthCallbackPage() {
 }
 
 export const Route = createFileRoute('/(auth)/auth-callback')({
+  head: () => ({
+    meta: [{ name: 'robots', content: 'noindex,follow' }],
+  }),
   component: AuthCallbackPage,
 });

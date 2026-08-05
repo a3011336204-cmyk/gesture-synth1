@@ -17,9 +17,11 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:3000/`. The first page render preloads the local
-MediaPipe model, but camera permission and Web Audio only start after clicking
-`Start playing`. Microphone permission is requested only when recording starts.
+Open `http://localhost:3000/`. The page immediately requests camera access. If
+permission is granted, the live camera preview appears while the local
+MediaPipe model and WASM runtime load for on-device hand tracking. Browser
+autoplay rules still require one click or touch on `Tap for sound` before Web
+Audio starts. Microphone permission is requested only when recording starts.
 
 ## Public Configuration
 
@@ -45,8 +47,9 @@ public application.
 - `src/components/gesture-synth/synth-engine.ts`: Web Audio synthesis and local
   MP4 recording from the live synth canvas with mixed microphone and generated audio.
 - `src/blocks/gesture-synth-home.tsx`: product homepage content.
-- `public/mediapipe/wasm/` and `public/models/hand_landmarker.task`: self-hosted
-  tracking runtime and model.
+- `public/mediapipe/wasm-0.10.35/` and
+  `public/models/hand_landmarker-0.10.35.task`: versioned, self-hosted tracking
+  runtime and model.
 
 The unused ShipAny backend modules remain in the repository as scaffold code,
 but they are not part of the public Gesture Synth startup path.

@@ -21,12 +21,13 @@ import {
   LoaderCircle,
   Maximize2,
   Minimize2,
-  Play,
   RotateCcw,
   Square,
+  Volume2,
   X,
 } from 'lucide-react';
 
+import { Link } from '@/core/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 import {
@@ -53,13 +54,16 @@ import {
 } from './synth-engine';
 
 const MAX_RECORDING_MS = 5 * 60 * 1000;
+const MEDIAPIPE_ASSET_VERSION = '0.10.35';
+const MEDIAPIPE_WASM_PATH = `/mediapipe/wasm-${MEDIAPIPE_ASSET_VERSION}`;
+const HAND_LANDMARKER_MODEL_PATH = `/models/hand_landmarker-${MEDIAPIPE_ASSET_VERSION}.task`;
 
 type ModelStatus = 'idle' | 'loading' | 'ready' | 'error';
 type SessionStatus = 'idle' | 'starting' | 'running' | 'error';
+type AudioStatus = 'locked' | 'starting' | 'ready' | 'error';
 type ModelDelegate = 'gpu' | 'cpu';
 type RecordingStopReason = 'manual' | 'limit';
 type StageErrorCode =
-  | 'audio_unavailable'
   | 'camera_denied'
   | 'camera_missing'
   | 'camera_busy'
@@ -101,7 +105,8 @@ type CapturableCanvas = HTMLCanvasElement & {
 };
 
 type PlausibleEvent =
-  | 'synth_start_click'
+  | 'synth_camera_start'
+  | 'synth_audio_enabled'
   | 'camera_permission'
   | 'synth_engine_ready'
   | 'two_hands_detected'
@@ -191,14 +196,6 @@ function microphoneError(cause: unknown): MicrophoneFailure {
   };
 }
 
-function audioError(cause: unknown): StageError {
-  return {
-    code: 'audio_unavailable',
-    title: 'Audio could not start',
-    message: `Check that browser audio is enabled, then try again. The browser reported: ${errorMessage(cause)}`,
-  };
-}
-
 function modelError(cause: unknown): StageError {
   return {
     code: 'model_failed',
@@ -213,9 +210,9 @@ async function createHandLandmarker(): Promise<{
 }> {
   const { FilesetResolver, HandLandmarker } =
     await import('@mediapipe/tasks-vision');
-  const visionFiles = await FilesetResolver.forVisionTasks('/mediapipe/wasm');
+  const visionFiles = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_PATH);
   const baseOptions = {
-    modelAssetPath: '/models/hand_landmarker.task',
+    modelAssetPath: HAND_LANDMARKER_MODEL_PATH,
   };
 
   try {
@@ -413,7 +410,10 @@ export function GestureSynthStage() {
     video?: VideoFrameElement;
   } | null>(null);
   const sessionActiveRef = useRef(false);
+  const sessionStartingRef = useRef(false);
   const sessionVersionRef = useRef(0);
+  const audioReadyRef = useRef(false);
+  const audioStartPromiseRef = useRef<Promise<boolean> | null>(null);
   const lastVideoTimeRef = useRef(-1);
   const lastReadoutAtRef = useRef(0);
   const twoHandsTrackedRef = useRef(false);
@@ -426,8 +426,10 @@ export function GestureSynthStage() {
   const recordingStoppingRef = useRef(false);
 
   const [modelStatus, setModelStatus] = useState<ModelStatus>('idle');
-  const [modelFailure, setModelFailure] = useState<Error | null>(null);
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('idle');
+  const [cameraReady, setCameraReady] = useState(false);
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>('locked');
+  const [audioFailure, setAudioFailure] = useState<string | null>(null);
   const [stageError, setStageError] = useState<StageError | null>(null);
   const [readout, setReadout] = useState<PerformanceReadout>({
     chord: '--',
@@ -456,7 +458,6 @@ export function GestureSynthStage() {
     if (modelPromiseRef.current) return modelPromiseRef.current;
 
     setModelStatus('loading');
-    setModelFailure(null);
     const modelPromise = createHandLandmarker()
       .then((model) => {
         if (!mountedRef.current) {
@@ -474,7 +475,6 @@ export function GestureSynthStage() {
           cause instanceof Error ? cause : new Error(errorMessage(cause));
         if (mountedRef.current) {
           setModelStatus('error');
-          setModelFailure(failure);
           trackSynthEvent('synth_error', { code: 'model_failed' });
         }
         throw failure;
@@ -522,12 +522,18 @@ export function GestureSynthStage() {
   const releaseSession = useCallback(
     (updateInterface = true) => {
       sessionActiveRef.current = false;
+      sessionStartingRef.current = false;
       sessionVersionRef.current += 1;
+      audioReadyRef.current = false;
+      audioStartPromiseRef.current = null;
       cancelFrameRequest();
       clearRecordingTimers();
       recordingStartingRef.current = false;
       recordingStoppingRef.current = false;
       if (updateInterface) {
+        setCameraReady(false);
+        setAudioStatus('locked');
+        setAudioFailure(null);
         setRecording(false);
         setRecordingStarting(false);
         setRecordingStopping(false);
@@ -691,19 +697,21 @@ export function GestureSynthStage() {
               rightLandmarks as HandLandmark[],
               'Right'
             );
-            engine.setFilterTilt(currentTilt);
-            if (stableChordState && stableChordState.qualityIndex >= 1) {
-              engine.playNotes(
-                getChordFrequencies(
-                  stableChordState,
-                  selectedKeyRef.current.tonicFrequency
-                )
-              );
-              engine.setVolume(currentVolume);
-            } else {
-              engine.setVolume(0);
+            if (audioReadyRef.current) {
+              engine.setFilterTilt(currentTilt);
+              if (stableChordState && stableChordState.qualityIndex >= 1) {
+                engine.playNotes(
+                  getChordFrequencies(
+                    stableChordState,
+                    selectedKeyRef.current.tonicFrequency
+                  )
+                );
+                engine.setVolume(currentVolume);
+              } else {
+                engine.setVolume(0);
+              }
             }
-          } else {
+          } else if (audioReadyRef.current) {
             engine.setVolume(0);
           }
 
@@ -751,100 +759,177 @@ export function GestureSynthStage() {
     [releaseSession]
   );
 
-  const startSession = useCallback(async () => {
-    if (sessionStatus === 'starting') return;
-    releaseSession();
-    setStageError(null);
-    setRecordingFailure(null);
-    setSessionStatus('starting');
-    trackSynthEvent('synth_start_click');
-    const sessionVersion = sessionVersionRef.current;
-    const engine = createSynthEngine();
-    engineRef.current = engine;
+  const startSession = useCallback(
+    async (source: 'automatic' | 'retry') => {
+      if (sessionStartingRef.current || sessionActiveRef.current) return;
+      releaseSession();
+      sessionStartingRef.current = true;
+      setStageError(null);
+      setRecordingFailure(null);
+      setSessionStatus('starting');
+      trackSynthEvent('synth_camera_start', { source });
+      const sessionVersion = sessionVersionRef.current;
+      const engine = createSynthEngine();
+      engineRef.current = engine;
 
-    try {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw {
+            code: 'camera_unavailable',
+            title: 'Camera access is unavailable',
+            message:
+              'Open this page over HTTPS in a current browser with camera support, then try again.',
+          } satisfies StageError;
+        }
+
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          });
+          trackSynthEvent('camera_permission', { result: 'granted' });
+        } catch (cause) {
+          const failure = cameraError(cause);
+          trackSynthEvent('camera_permission', { result: failure.code });
+          throw failure;
+        }
+
+        if (
+          !mountedRef.current ||
+          sessionVersion !== sessionVersionRef.current
+        ) {
+          for (const track of stream.getTracks()) track.stop();
+          return;
+        }
+
+        cameraStreamRef.current = stream;
+        const video = videoRef.current;
+        if (!video) {
+          throw {
+            code: 'camera_unavailable',
+            title: 'Camera view is unavailable',
+            message:
+              'The performance view was removed before the camera started.',
+          } satisfies StageError;
+        }
+        video.srcObject = stream;
+        await waitForVideo(video);
+
+        if (
+          !mountedRef.current ||
+          sessionVersion !== sessionVersionRef.current
+        ) {
+          return;
+        }
+        setCameraReady(true);
+
+        let model: Awaited<ReturnType<typeof createHandLandmarker>>;
+        try {
+          model = await ensureHandLandmarker();
+        } catch (cause) {
+          throw modelError(cause);
+        }
+
+        if (
+          !mountedRef.current ||
+          sessionVersion !== sessionVersionRef.current
+        ) {
+          return;
+        }
+
+        sessionActiveRef.current = true;
+        setSessionStatus('running');
+        trackSynthEvent('synth_engine_ready', { delegate: model.delegate });
+        startFrameLoop(model.landmarker, engine);
+      } catch (cause) {
+        if (
+          !mountedRef.current ||
+          sessionVersion !== sessionVersionRef.current
+        ) {
+          return;
+        }
+        const failure =
+          typeof cause === 'object' &&
+          cause !== null &&
+          'code' in cause &&
+          'title' in cause &&
+          'message' in cause
+            ? (cause as StageError)
+            : ({
+                code: 'runtime_failed',
+                title: 'The synth could not start',
+                message: `Try again. The browser reported: ${errorMessage(cause)}`,
+              } satisfies StageError);
+        console.error(`${failure.title}: ${failure.message}`);
+        trackSynthEvent('synth_error', { code: failure.code });
+        releaseSession();
+        setStageError(failure);
+        setSessionStatus('error');
+      } finally {
+        if (sessionVersion === sessionVersionRef.current) {
+          sessionStartingRef.current = false;
+        }
+      }
+    },
+    [ensureHandLandmarker, releaseSession, startFrameLoop]
+  );
+
+  const enableAudio = useCallback(async (): Promise<boolean> => {
+    if (audioReadyRef.current) return true;
+    if (audioStartPromiseRef.current) return audioStartPromiseRef.current;
+
+    const engine = engineRef.current;
+    if (!engine) {
+      setAudioStatus('error');
+      setAudioFailure('The sound engine is not ready yet.');
+      return false;
+    }
+
+    const sessionVersion = sessionVersionRef.current;
+    setAudioStatus('starting');
+    setAudioFailure(null);
+    const audioStartPromise = (async () => {
       try {
         await engine.start();
+        if (
+          !mountedRef.current ||
+          sessionVersion !== sessionVersionRef.current ||
+          engineRef.current !== engine
+        ) {
+          return false;
+        }
+        audioReadyRef.current = true;
+        setAudioStatus('ready');
+        trackSynthEvent('synth_audio_enabled');
+        return true;
       } catch (cause) {
-        throw audioError(cause);
+        if (
+          !mountedRef.current ||
+          sessionVersion !== sessionVersionRef.current ||
+          engineRef.current !== engine
+        ) {
+          return false;
+        }
+        const message = `Sound could not start: ${errorMessage(cause)}`;
+        setAudioStatus('error');
+        setAudioFailure(message);
+        trackSynthEvent('synth_error', { code: 'audio_unavailable' });
+        return false;
       }
+    })();
 
-      const modelPromise = ensureHandLandmarker();
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw {
-          code: 'camera_unavailable',
-          title: 'Camera access is unavailable',
-          message:
-            'Open this page over HTTPS in a current browser with camera support, then try again.',
-        } satisfies StageError;
-      }
-
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        });
-        trackSynthEvent('camera_permission', { result: 'granted' });
-      } catch (cause) {
-        const failure = cameraError(cause);
-        trackSynthEvent('camera_permission', { result: failure.code });
-        throw failure;
-      }
-
-      cameraStreamRef.current = stream;
-      const video = videoRef.current;
-      if (!video) {
-        throw {
-          code: 'camera_unavailable',
-          title: 'Camera view is unavailable',
-          message:
-            'The performance view was removed before the camera started.',
-        } satisfies StageError;
-      }
-      video.srcObject = stream;
-      await waitForVideo(video);
-
-      let model: Awaited<ReturnType<typeof createHandLandmarker>>;
-      try {
-        model = await modelPromise;
-      } catch (cause) {
-        throw modelError(cause);
-      }
-
-      if (!mountedRef.current || sessionVersion !== sessionVersionRef.current) {
-        releaseSession(mountedRef.current);
-        return;
-      }
-
-      sessionActiveRef.current = true;
-      setSessionStatus('running');
-      trackSynthEvent('synth_engine_ready', { delegate: model.delegate });
-      startFrameLoop(model.landmarker, engine);
-    } catch (cause) {
-      const failure =
-        typeof cause === 'object' &&
-        cause !== null &&
-        'code' in cause &&
-        'title' in cause &&
-        'message' in cause
-          ? (cause as StageError)
-          : ({
-              code: 'runtime_failed',
-              title: 'The synth could not start',
-              message: `Try again. The browser reported: ${errorMessage(cause)}`,
-            } satisfies StageError);
-      console.error(`${failure.title}: ${failure.message}`);
-      trackSynthEvent('synth_error', { code: failure.code });
-      releaseSession();
-      setStageError(failure);
-      setSessionStatus('error');
+    audioStartPromiseRef.current = audioStartPromise;
+    const audioEnabled = await audioStartPromise;
+    if (audioStartPromiseRef.current === audioStartPromise) {
+      audioStartPromiseRef.current = null;
     }
-  }, [ensureHandLandmarker, releaseSession, sessionStatus, startFrameLoop]);
+    return audioEnabled;
+  }, []);
 
   const startRecording = useCallback(async () => {
     if (recordingStartingRef.current || recordingStoppingRef.current) return;
@@ -886,6 +971,12 @@ export function GestureSynthStage() {
         'Microphone access is unavailable. Open this page over HTTPS in a current browser and try again.'
       );
       trackSynthEvent('synth_error', { code: 'microphone_unavailable' });
+      return;
+    }
+    if (!(await enableAudio())) {
+      setRecordingFailure(
+        'Sound could not start. Tap the sound button, then try recording again.'
+      );
       return;
     }
 
@@ -969,6 +1060,7 @@ export function GestureSynthStage() {
     }
   }, [
     clearRecordingTimers,
+    enableAudio,
     releaseRecordingInputStreams,
     stopAndDownloadRecording,
   ]);
@@ -989,20 +1081,17 @@ export function GestureSynthStage() {
 
   useEffect(() => {
     mountedRef.current = true;
-    const preloadTimer = window.setTimeout(() => {
-      void ensureHandLandmarker().catch((cause: unknown) => {
-        console.error(`Hand tracking preload failed: ${errorMessage(cause)}`);
-      });
-    }, 80);
-
+    const automaticStartTimer = window.setTimeout(() => {
+      void startSession('automatic');
+    }, 0);
     return () => {
+      window.clearTimeout(automaticStartTimer);
       mountedRef.current = false;
-      window.clearTimeout(preloadTimer);
       releaseSession(false);
       landmarkerRef.current?.close();
       landmarkerRef.current = null;
     };
-  }, [ensureHandLandmarker, releaseSession]);
+  }, [releaseSession, startSession]);
 
   useEffect(() => {
     const container = canvasContainerRef.current;
@@ -1054,8 +1143,25 @@ export function GestureSynthStage() {
   };
 
   const volumeBarCount = Math.round(readout.volume * 8);
-  const preloadFailure = modelStatus === 'error' ? modelFailure : null;
-  const isPerformanceVisible = sessionStatus === 'running';
+  const isTrackingActive = sessionStatus === 'running';
+  const cameraStatusText = isTrackingActive
+    ? 'Camera on · Processing locally'
+    : cameraReady && modelStatus === 'loading'
+      ? 'Camera on · Loading hand tracking'
+      : cameraReady
+        ? 'Camera on · Starting hand tracking'
+        : 'Waiting for camera permission';
+  const audioActionLabel =
+    audioStatus === 'starting'
+      ? 'Starting sound'
+      : audioStatus === 'error'
+        ? 'Retry sound'
+        : 'Tap for sound';
+  const showCameraHelp =
+    stageError?.code === 'camera_denied' ||
+    stageError?.code === 'camera_missing' ||
+    stageError?.code === 'camera_busy' ||
+    stageError?.code === 'camera_unavailable';
 
   return (
     <div
@@ -1069,13 +1175,22 @@ export function GestureSynthStage() {
       )}
     >
       <div ref={canvasContainerRef} className="absolute inset-0">
-        <video ref={videoRef} className="hidden" autoPlay muted playsInline />
+        <video
+          ref={videoRef}
+          className={cn(
+            'absolute inset-0 size-full scale-x-[-1] object-cover transition-opacity duration-300',
+            isTrackingActive ? 'opacity-0' : 'opacity-100'
+          )}
+          autoPlay
+          muted
+          playsInline
+        />
         <canvas
           ref={canvasRef}
           data-testid="gesture-canvas"
           className={cn(
-            'size-full transition-[filter] duration-300',
-            !isPerformanceVisible && 'brightness-50 grayscale'
+            'absolute inset-0 size-full transition-opacity duration-300',
+            isTrackingActive ? 'opacity-100' : 'opacity-0'
           )}
         />
       </div>
@@ -1109,119 +1224,130 @@ export function GestureSynthStage() {
         </button>
       </div>
 
-      {isPerformanceVisible && (
-        <>
-          <div className="absolute top-3 left-3 z-20 flex w-[132px] flex-col gap-2 sm:top-4 sm:left-4 sm:w-[148px]">
-            <label className="sr-only" htmlFor="gesture-synth-key">
-              Musical key
-            </label>
-            <select
-              id="gesture-synth-key"
-              value={selectedKeyName}
-              onChange={(event) =>
-                setSelectedKeyName(event.target.value as KeyOption['name'])
-              }
-              className="h-8 rounded border border-[#3a3428] bg-[#151515]/95 px-2 font-mono text-xs text-[#e8a13d] outline-none focus:border-[#e8a13d] sm:text-sm"
-            >
-              {KEY_OPTIONS.map((keyOption) => (
-                <option key={keyOption.name} value={keyOption.name}>
-                  Key: {keyOption.label}
-                </option>
-              ))}
-            </select>
-            <label className="sr-only" htmlFor="gesture-synth-waveform">
-              Synth waveform
-            </label>
-            <select
-              id="gesture-synth-waveform"
-              value={waveform}
-              onChange={(event) =>
-                setWaveform(event.target.value as OscillatorType)
-              }
-              className="h-8 rounded border border-[#3a3428] bg-[#151515]/95 px-2 font-mono text-xs text-[#e8a13d] outline-none focus:border-[#e8a13d] sm:text-sm"
-            >
-              {WAVEFORM_OPTIONS.map((waveformOption) => (
-                <option key={waveformOption.value} value={waveformOption.value}>
-                  {waveformOption.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="absolute top-3 left-3 z-20 flex w-[132px] flex-col gap-2 sm:top-4 sm:left-4 sm:w-[148px]">
+        <label className="sr-only" htmlFor="gesture-synth-key">
+          Musical key
+        </label>
+        <select
+          id="gesture-synth-key"
+          value={selectedKeyName}
+          onChange={(event) =>
+            setSelectedKeyName(event.target.value as KeyOption['name'])
+          }
+          className="h-8 rounded border border-[#3a3428] bg-[#151515]/95 px-2 font-mono text-xs text-[#e8a13d] outline-none focus:border-[#e8a13d] sm:text-sm"
+        >
+          {KEY_OPTIONS.map((keyOption) => (
+            <option key={keyOption.name} value={keyOption.name}>
+              Key: {keyOption.label}
+            </option>
+          ))}
+        </select>
+        <label className="sr-only" htmlFor="gesture-synth-waveform">
+          Synth waveform
+        </label>
+        <select
+          id="gesture-synth-waveform"
+          value={waveform}
+          onChange={(event) =>
+            setWaveform(event.target.value as OscillatorType)
+          }
+          className="h-8 rounded border border-[#3a3428] bg-[#151515]/95 px-2 font-mono text-xs text-[#e8a13d] outline-none focus:border-[#e8a13d] sm:text-sm"
+        >
+          {WAVEFORM_OPTIONS.map((waveformOption) => (
+            <option key={waveformOption.value} value={waveformOption.value}>
+              {waveformOption.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          <div className="absolute top-14 right-3 z-20 flex w-[72px] flex-col items-end gap-1 sm:top-16 sm:right-4">
-            <div className="flex w-full flex-col-reverse gap-[3px]">
-              {Array.from({ length: 8 }, (_, index) => (
-                <span
-                  key={index}
-                  className={cn(
-                    'h-1.5 w-full rounded-[2px] bg-[#3a3428] sm:h-2',
-                    index >= 8 - volumeBarCount && 'bg-[#e8a13d]'
-                  )}
-                />
-              ))}
-            </div>
-            <span className="mt-1 font-mono text-[10px] text-[#e8a13d] sm:text-xs">
-              Filter: {readout.filterPercent > 0 ? '+' : ''}
-              {readout.filterPercent}%
-            </span>
-          </div>
+      {!stageError && (
+        <div className="absolute top-[92px] left-3 z-30 inline-flex min-h-8 max-w-[calc(100%_-_7rem)] items-center gap-2 rounded-md border border-[#75dfd2]/20 bg-[#07111f]/88 px-3 py-1.5 font-mono text-[10px] text-white/65 backdrop-blur sm:top-[92px] sm:left-4 sm:max-w-sm sm:text-xs">
+          {sessionStatus === 'starting' ? (
+            <LoaderCircle className="size-3.5 shrink-0 animate-spin text-[#75dfd2]" />
+          ) : (
+            <span className="size-1.5 shrink-0 rounded-full bg-[#75dfd2]" />
+          )}
+          <span>{cameraStatusText}</span>
+        </div>
+      )}
 
-          <div className="absolute top-[92px] left-3 z-20 flex items-center gap-2 sm:top-4 sm:left-1/2 sm:-translate-x-1/2">
-            {recording ? (
-              <div className="flex h-9 items-center gap-2 rounded-md border border-red-400/30 bg-[#150c0d]/90 px-2 backdrop-blur">
-                <span className="size-2 animate-pulse rounded-full bg-red-500" />
-                <span className="w-11 font-mono text-xs text-white tabular-nums">
-                  {formatDuration(recordingSeconds)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void stopAndDownloadRecording('manual')}
-                  disabled={recordingStopping}
-                  className="grid size-7 place-items-center rounded text-red-300 transition-colors hover:bg-white/10 disabled:opacity-50"
-                  aria-label="Stop and download recording"
-                  title="Stop and download"
-                >
-                  {recordingStopping ? (
-                    <LoaderCircle className="size-4 animate-spin" />
-                  ) : (
-                    <Square className="size-3.5 fill-current" />
-                  )}
-                </button>
-              </div>
-            ) : (
+      <div className="absolute top-14 right-3 z-20 flex w-[72px] flex-col items-end gap-1 sm:top-16 sm:right-4">
+        <div className="flex w-full flex-col-reverse gap-[3px]">
+          {Array.from({ length: 8 }, (_, index) => (
+            <span
+              key={index}
+              className={cn(
+                'h-1.5 w-full rounded-[2px] bg-[#3a3428] sm:h-2',
+                index >= 8 - volumeBarCount && 'bg-[#e8a13d]'
+              )}
+            />
+          ))}
+        </div>
+        <span className="mt-1 font-mono text-[10px] text-[#e8a13d] sm:text-xs">
+          Filter: {readout.filterPercent > 0 ? '+' : ''}
+          {readout.filterPercent}%
+        </span>
+      </div>
+
+      {!stageError && (
+        <div className="absolute top-3 left-[160px] z-20 flex items-center gap-2 sm:top-4 sm:left-1/2 sm:-translate-x-1/2">
+          {recording ? (
+            <div className="flex h-9 items-center gap-2 rounded-md border border-red-400/30 bg-[#150c0d]/90 px-2 backdrop-blur">
+              <span className="size-2 animate-pulse rounded-full bg-red-500" />
+              <span className="w-11 font-mono text-xs text-white tabular-nums">
+                {formatDuration(recordingSeconds)}
+              </span>
               <button
                 type="button"
-                onClick={() => void startRecording()}
-                disabled={recordingStarting}
-                className="grid size-9 place-items-center rounded-md border border-white/10 bg-[#07111f]/90 text-red-400 backdrop-blur transition-colors hover:bg-white/10 hover:text-red-300 disabled:cursor-wait disabled:opacity-65"
-                aria-label={
-                  recordingStarting
-                    ? 'Requesting microphone access'
-                    : 'Start MP4 performance recording'
-                }
-                title={
-                  recordingStarting
-                    ? 'Allow microphone access to record'
-                    : 'Record performance display, microphone, and synth audio as MP4'
-                }
+                onClick={() => void stopAndDownloadRecording('manual')}
+                disabled={recordingStopping}
+                className="grid size-7 place-items-center rounded text-red-300 transition-colors hover:bg-white/10 disabled:opacity-50"
+                aria-label="Stop and download recording"
+                title="Stop and download"
               >
-                {recordingStarting ? (
+                {recordingStopping ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (
-                  <Circle className="size-4 fill-current" />
+                  <Square className="size-3.5 fill-current" />
                 )}
               </button>
-            )}
-          </div>
-
-          <div className="pointer-events-none absolute right-20 bottom-3 left-20 z-20 flex flex-col items-center gap-1 font-mono text-[#e8a13d] sm:bottom-4">
-            <span className="text-xs font-bold drop-shadow-[0_0_12px_rgba(232,161,61,0.65)]">
-              {readout.chord}
-            </span>
-            <span className="text-[10px] sm:text-xs">{readout.quality}</span>
-          </div>
-        </>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void startRecording()}
+              disabled={recordingStarting || !isTrackingActive}
+              className="grid size-9 place-items-center rounded-md border border-white/10 bg-[#07111f]/90 text-red-400 backdrop-blur transition-colors hover:bg-white/10 hover:text-red-300 disabled:cursor-wait disabled:opacity-65"
+              aria-label={
+                recordingStarting
+                  ? 'Requesting microphone access'
+                  : 'Start MP4 performance recording'
+              }
+              title={
+                !isTrackingActive
+                  ? 'Camera and hand tracking are still starting'
+                  : recordingStarting
+                    ? 'Allow microphone access to record'
+                    : 'Record performance display, microphone, and synth audio as MP4'
+              }
+            >
+              {recordingStarting ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <Circle className="size-4 fill-current" />
+              )}
+            </button>
+          )}
+        </div>
       )}
+
+      <div className="pointer-events-none absolute right-20 bottom-3 left-20 z-20 flex flex-col items-center gap-1 font-mono text-[#e8a13d] sm:bottom-4">
+        <span className="text-xs font-bold drop-shadow-[0_0_12px_rgba(232,161,61,0.65)]">
+          {readout.chord}
+        </span>
+        <span className="text-[10px] sm:text-xs">{readout.quality}</span>
+      </div>
 
       <button
         type="button"
@@ -1251,86 +1377,59 @@ export function GestureSynthStage() {
         </div>
       )}
 
-      {!isPerformanceVisible && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#071725]/78 px-5 pt-14 pb-12 text-center backdrop-blur-[2px]">
-          {sessionStatus === 'starting' ? (
-            <div className="flex max-w-sm flex-col items-center">
-              <LoaderCircle className="mb-5 size-10 animate-spin text-[#75dfd2]" />
-              <p className="text-xl font-semibold">Starting Gesture Synth</p>
-              <p className="mt-2 text-sm leading-6 text-white/60">
-                {modelStatus === 'ready'
-                  ? 'Connecting camera and audio...'
-                  : 'Loading on-device hand tracking...'}
-              </p>
-            </div>
-          ) : stageError ? (
-            <div className="flex max-w-md flex-col items-center">
-              <AlertTriangle className="mb-4 size-9 text-amber-300" />
-              <p className="text-xl font-semibold">{stageError.title}</p>
-              <p className="mt-3 text-sm leading-6 text-white/65">
-                {stageError.message}
-              </p>
-              <button
-                type="button"
-                onClick={() => void startSession()}
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-md bg-[#75dfd2] px-6 text-sm font-semibold text-[#061a24] transition-colors hover:bg-[#95eee4]"
-              >
-                <RotateCcw className="size-4" />
-                Try again
-              </button>
-            </div>
-          ) : preloadFailure ? (
-            <div className="flex max-w-md flex-col items-center">
-              <AlertTriangle className="mb-4 size-9 text-amber-300" />
-              <p className="text-xl font-semibold">
-                Hand tracking did not load
-              </p>
-              <p className="mt-3 text-sm leading-6 text-white/65">
-                {preloadFailure.message}
-              </p>
-              <button
-                type="button"
-                onClick={() => void ensureHandLandmarker()}
-                className="mt-6 inline-flex h-11 items-center gap-2 rounded-md bg-[#75dfd2] px-6 text-sm font-semibold text-[#061a24] transition-colors hover:bg-[#95eee4]"
-              >
-                <RotateCcw className="size-4" />
-                Reload tracking
-              </button>
-            </div>
-          ) : (
-            <div className="flex max-w-md flex-col items-center">
-              <p className="font-mono text-[11px] font-semibold text-[#75dfd2] uppercase">
-                Gesture Synth
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold sm:text-4xl">
-                Ready to make music
-              </h2>
-              <button
-                type="button"
-                onClick={() => void startSession()}
-                className="mt-7 inline-flex h-12 min-w-48 items-center justify-center gap-2 rounded-md bg-[#75dfd2] px-7 text-sm font-bold text-[#061a24] shadow-[0_12px_36px_rgba(117,223,210,0.22)] transition-colors hover:bg-[#95eee4]"
-              >
-                <Play className="size-4 fill-current" />
-                Start playing
-              </button>
-              <p className="mt-4 text-xs text-white/45">
-                Camera and audio stay on this device.
-              </p>
-              <p className="mt-7 flex items-center gap-2 font-mono text-[10px] text-white/40">
-                <span
-                  className={cn(
-                    'size-1.5 rounded-full',
-                    modelStatus === 'ready'
-                      ? 'bg-emerald-400'
-                      : 'animate-pulse bg-[#75dfd2]'
-                  )}
-                />
-                {modelStatus === 'ready'
-                  ? 'Hand tracking ready'
-                  : 'Preparing hand tracking'}
-              </p>
-            </div>
+      {sessionStatus !== 'error' &&
+        audioStatus !== 'ready' &&
+        !recordingFailure && (
+          <button
+            type="button"
+            onClick={() => void enableAudio()}
+            disabled={audioStatus === 'starting'}
+            className={cn(
+              'absolute right-3 bottom-3 z-30 inline-flex min-h-10 items-center gap-2 rounded-md border bg-[#07111f]/90 px-3 font-mono text-[10px] backdrop-blur transition-colors sm:right-4 sm:bottom-4 sm:text-xs',
+              audioStatus === 'error'
+                ? 'border-amber-300/35 text-amber-100 hover:bg-[#1d1710]'
+                : 'border-white/10 text-white/65 hover:bg-white/10 hover:text-white'
+            )}
+            aria-label={audioActionLabel}
+            title={audioFailure ?? 'Enable browser sound for Gesture Synth'}
+          >
+            {audioStatus === 'starting' ? (
+              <LoaderCircle className="size-4 animate-spin text-[#75dfd2]" />
+            ) : (
+              <Volume2 className="size-4 text-[#75dfd2]" />
+            )}
+            {audioActionLabel}
+          </button>
+        )}
+
+      {stageError && (
+        <div
+          role="alert"
+          className="absolute top-[92px] right-3 left-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-amber-300/30 bg-[#15110d]/94 px-3 py-3 text-left text-xs text-amber-50 shadow-lg backdrop-blur sm:top-4 sm:right-auto sm:left-1/2 sm:w-[min(620px,calc(100%_-_12rem))] sm:-translate-x-1/2"
+        >
+          <AlertTriangle className="size-4 shrink-0 text-amber-300" />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{stageError.title}</p>
+            <p className="mt-0.5 leading-5 text-white/60">
+              {stageError.message}
+            </p>
+          </div>
+          {showCameraHelp && (
+            <Link
+              href="/camera-permission-help"
+              className="font-semibold text-[#75dfd2] transition-colors hover:text-[#95eee4]"
+            >
+              Camera help
+            </Link>
           )}
+          <button
+            type="button"
+            onClick={() => void startSession('retry')}
+            className="inline-flex min-h-9 items-center gap-2 rounded-md bg-[#75dfd2] px-3 font-semibold text-[#061a24] transition-colors hover:bg-[#95eee4]"
+          >
+            <RotateCcw className="size-3.5" />
+            Try camera
+          </button>
         </div>
       )}
 

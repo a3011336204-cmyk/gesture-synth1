@@ -184,5 +184,8 @@ function ResetPasswordPage() {
 }
 
 export const Route = createFileRoute('/(auth)/reset-password')({
+  head: () => ({
+    meta: [{ name: 'robots', content: 'noindex,follow' }],
+  }),
   component: ResetPasswordPage,
 });

@@ -1,0 +1,50 @@
+export const meta = {
+  title: 'Camera Permission Help for Gesture Synth',
+  description:
+    'Fix blocked camera access in Gesture Synth, check device availability, and start the browser instrument again.',
+  updated_at: '2026-08-05',
+};
+
+## Short answer
+
+If Gesture Synth says camera access is blocked, allow the camera for this site in your browser, then reload the homepage. Gesture Synth requests access as the page opens. If you allow it, the live camera preview appears first while local hand tracking loads. Gesture Synth does not upload camera frames or hand landmarks.
+
+[Open Gesture Synth](/#play)
+
+## Start with the quick checks
+
+1. Confirm that you opened the HTTPS version of the site, not an insecure copy or browser preview.
+2. Close another app or tab that may be using the camera.
+3. Check for a physical camera shutter, privacy switch, or operating-system privacy block.
+4. Reload Gesture Synth after you change a permission so it can make a new camera request as the page opens.
+
+## Change the site permission
+
+**Chrome or Edge:** Select the camera or site-controls icon beside the address bar, find the Camera setting, choose **Allow**, then reload the page. If the browser does not show a permission control, open its site settings for Gesture Synth and reset the camera permission before trying again.
+
+**Safari on macOS:** In Safari, open **Safari > Settings > Websites > Camera**, find Gesture Synth, choose **Allow**, then reload. macOS can also block Safari under **System Settings > Privacy & Security > Camera**.
+
+**Firefox:** Select the permissions icon beside the address bar and remove a blocked camera permission, then reload. Firefox can also manage camera permissions from its Privacy & Security settings.
+
+These steps describe the usual browser controls, not a promise of feature support in each browser. Gesture Synth is currently tested in Google Chrome; see [browser and device compatibility](/compatibility) for the support boundary.
+
+## What the messages mean
+
+**Camera access is blocked:** Your browser or operating system denied the request. Change the site permission, reload, and try again.
+
+**No camera was found:** Connect or enable a front-facing camera, then reload the homepage.
+
+**The camera is unavailable:** Another app may be using it, or the operating system may have blocked browser access. Close the other app and check system privacy settings.
+
+**The camera could not start:** Copy the exact browser message, then contact support with your browser, version, device, and operating system.
+
+## Official permission references
+
+- [Chrome: change settings for a site](https://support.google.com/chrome/answer/114662?hl=en)
+- [Apple: change website settings in Safari](https://support.apple.com/guide/safari/websites-ibrwe2159f50/mac)
+- [Firefox: site permissions](https://support.mozilla.org/kb/site-permissions)
+- [MDN: getUserMedia() security and privacy](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia#security)
+
+## Still blocked?
+
+Email [a3011336204@gmail.com](mailto:a3011336204@gmail.com) with the exact on-screen message, browser and version, device, and operating system. Do not send camera footage or recordings unless it is necessary and you are comfortable sharing it.

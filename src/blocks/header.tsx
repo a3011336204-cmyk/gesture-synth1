@@ -9,6 +9,7 @@ const NAVIGATION = [
   { href: '#features', label: 'Features' },
   { href: '#tutorial', label: 'Tutorial' },
   { href: '/how-it-works', label: 'How It Works' },
+  { href: '/compatibility', label: 'Compatibility' },
   { href: '#technology', label: 'Technology' },
   { href: '#faq', label: 'FAQ' },
 ] as const;

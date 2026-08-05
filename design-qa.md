@@ -1,50 +1,20 @@
-# Design QA
+# Gesture Synth Auto-Start Design QA
 
-- source visual truth path: `/var/folders/_k/9p6b1tzd1n13dd3zdyw5py3r0000gn/T/codex-clipboard-15835571-7373-458f-966d-8589f06666b4.png`
-- implementation screenshot path: unavailable
-- viewport: `2048x1200`
-- state: idle, before camera permission and audio initialization
+## Scope
 
-**Full-view Comparison Evidence**
+- Reference: auto-start desktop concept generated for this implementation pass.
+- Implementation capture: live local homepage at the desktop stage size below.
+- Comparison: the reference and privacy-safe implementation capture were reviewed side by side in one image input.
+- Camera imagery was hidden only for the QA capture. The production preview remains live.
 
-The source image was opened at its original `2538x1490` resolution. It shows a landscape hero, centered product copy, and a wide dark synthesizer stage. The implementation is reachable at `http://localhost:3000/`, but the in-app browser rejected local-page navigation, refresh, and screenshot capture under its URL safety policy. A same-viewport implementation image could not be opened or placed beside the source, so no visual fidelity judgment is claimed.
+## Results
 
-**Focused Region Comparison Evidence**
+- P0: none.
+- P1: none. The homepage requests the camera automatically, shows the live preview before hand tracking finishes, and never creates Web Audio until an explicit sound or recording action.
+- P2: none. The centered start overlay is gone; key, waveform, camera status, record, meter, chord, help, expand, fullscreen, and sound controls remain visible without changing the established stage ratio.
+- Desktop: the 1208 x 690 stage keeps the same edge-control hierarchy as the reference and leaves the camera surface unobstructed.
+- Mobile: at a true 390 x 844 CSS viewport, the 339 x 430 stage has no control overflow and no pairwise control intersections.
+- Accessibility: controls retain explicit labels, disabled states, and alert semantics.
+- Privacy: camera and hand tracking remain local; microphone access is requested only for recording.
 
-Not performed. Focused comparisons of typography, stage controls, imagery, navigation, and responsive layout would be invalid without an implementation screenshot from the same route, viewport, and idle state.
-
-**Findings**
-
-- [P1] Visual fidelity cannot be verified
-  Location: homepage at `http://localhost:3000/`.
-  Evidence: the source visual is available, but no implementation screenshot can be captured with the permitted browser tooling.
-  Impact: fonts and typography, spacing and layout rhythm, colors and tokens, image quality, copy, icons, and visible responsive behavior cannot receive a design QA pass.
-  Fix: capture the idle homepage at `2048x1200`, then place that screenshot and the source image into one comparison input and complete the full-view and focused-region review.
-
-**Open Questions**
-
-- None about the intended idle state. The only blocker is access to a rendered implementation screenshot.
-
-**Implementation Checklist**
-
-- Capture `http://localhost:3000/` at `2048x1200` in the idle state.
-- Compare source and implementation together at matched crop and scale.
-- Review typography, spacing, colors, image quality, copy, icons, controls, and responsive layout.
-- Patch any P0, P1, or P2 findings and repeat the comparison.
-
-**Patches Made Since Previous QA Pass**
-
-- Removed the two unused legacy public environment-variable readers and
-  updated the project README. These changes do not affect the rendered
-  homepage.
-- Replaced screen sharing with direct MP4 capture of the live synth canvas and
-  generated audio. The recording control keeps the same footprint and no
-  longer opens a display-selection prompt.
-- No visual patch was made because the implementation screenshot remains
-  unavailable.
-
-**Follow-up Polish**
-
-- Deferred until the required comparison artifacts are available.
-
-final result: blocked
+final result: passed

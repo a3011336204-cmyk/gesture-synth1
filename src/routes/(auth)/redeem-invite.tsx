@@ -160,5 +160,8 @@ function RedeemInvitePage() {
 }
 
 export const Route = createFileRoute('/(auth)/redeem-invite')({
+  head: () => ({
+    meta: [{ name: 'robots', content: 'noindex,follow' }],
+  }),
   component: RedeemInvitePage,
 });

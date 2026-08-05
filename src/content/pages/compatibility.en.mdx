@@ -1,0 +1,41 @@
+export const meta = {
+  title: 'Gesture Synth Browser and Device Compatibility',
+  description:
+    'What Gesture Synth has been tested with, what the browser must provide, and what to check before starting the online gesture synthesizer.',
+  updated_at: '2026-08-05',
+};
+
+## Short answer
+
+Gesture Synth has been tested in Google Chrome. The complete experience needs a secure page, a working camera, browser audio, and enough device capability to run local hand tracking. That test result does not certify a particular Chrome version, operating system, device, camera, microphone, or extension setup.
+
+[Open Gesture Synth](/#play)
+
+## What has been verified
+
+**Google Chrome:** Gesture Synth has been tested in Chrome. The homepage requests camera access as soon as it opens. After permission is granted, the live camera preview appears while the local hand-tracking model loads. Browser autoplay rules require one click or touch on **Tap for sound** before Web Audio starts. Normal playing does not request microphone access; Gesture Synth requests it only when you choose Record.
+
+**Other browsers:** Edge, Safari, Firefox, and embedded in-app browsers are not currently promised. Their camera, Web Audio, canvas capture, MP4 recording, fullscreen, hardware acceleration, and permission behavior can differ by device. Use the messages inside the instrument as the source of truth if a feature is unavailable.
+
+## Before you start
+
+1. Open Gesture Synth over HTTPS in a current browser with a camera.
+2. Make sure no other application is holding the camera.
+3. Sit or stand where both hands fit inside the camera frame with clear lighting.
+4. Allow the camera when your browser asks. If it is blocked, follow [camera permission help](/camera-permission-help).
+5. When hand tracking is ready, click or tap **Tap for sound** once and start at a comfortable volume. Only choose Record when you are ready to allow microphone access.
+
+## Features that depend on your browser and device
+
+The browser provides camera access, the Web Audio API, canvas capture, MediaRecorder support, fullscreen, and the permissions UI. Gesture Synth uses a local MediaPipe hand-tracking model and tries GPU processing before a CPU fallback. That fallback can help when GPU setup fails, but it is not a guarantee that every device can run the instrument or create an MP4 recording.
+
+## Useful references
+
+- [MediaPipe Hand Landmarker for web](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/web_js)
+- [MDN: getUserMedia()](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia)
+- [MDN: Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
+- [MDN: MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder)
+
+## Need a hand?
+
+When something does not work, note the browser, browser version, device, operating system, and exact on-screen message. Then try [camera permission help](/camera-permission-help) or email [a3011336204@gmail.com](mailto:a3011336204@gmail.com). Do not send personal camera footage or recordings unless it is necessary and you are comfortable sharing it.

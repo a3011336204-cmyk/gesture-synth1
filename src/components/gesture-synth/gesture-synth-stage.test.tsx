@@ -1,3 +1,4 @@
+import { StrictMode, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import {
   act,
   fireEvent,
@@ -8,6 +9,15 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GestureSynthStage } from './gesture-synth-stage';
+
+vi.mock('@/core/i18n/navigation', () => ({
+  Link: ({
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode }) => (
+    <a {...props}>{children}</a>
+  ),
+}));
 
 const mediaPipeMocks = vi.hoisted(() => ({
   close: vi.fn(),
@@ -187,6 +197,22 @@ function microphoneStream(): MediaStream {
   ]) as unknown as MediaStream;
 }
 
+function createDeferred<Value>() {
+  let resolve!: (value: Value | PromiseLike<Value>) => void;
+  const promise = new Promise<Value>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+async function findEnabledRecordButton() {
+  const recordButton = await screen.findByRole('button', {
+    name: 'Start MP4 performance recording',
+  });
+  await waitFor(() => expect(recordButton).toBeEnabled());
+  return recordButton;
+}
+
 beforeEach(() => {
   vi.useRealTimers();
   audioContextInstances.length = 0;
@@ -201,6 +227,7 @@ beforeEach(() => {
   captureCanvas.mockReset();
   captureCanvas.mockImplementation(() => canvasStream());
   mediaPipeMocks.close.mockClear();
+  mediaPipeMocks.forVisionTasks.mockClear();
   mediaPipeMocks.createFromOptions.mockReset();
   mediaPipeMocks.createFromOptions.mockResolvedValue({
     close: mediaPipeMocks.close,
@@ -253,47 +280,144 @@ beforeEach(() => {
 });
 
 describe('GestureSynthStage lifecycle', () => {
-  it('preloads tracking without touching camera or audio', async () => {
+  it('requests the camera automatically and waits for permission before loading tracking', async () => {
+    const cameraPermission = createDeferred<MediaStream>();
+    requestUserMedia.mockReturnValue(cameraPermission.promise);
     render(<GestureSynthStage />);
+
+    await waitFor(() => expect(requestUserMedia).toHaveBeenCalledTimes(1));
+    expect(requestUserMedia).toHaveBeenCalledWith({
+      audio: false,
+      video: {
+        facingMode: 'user',
+        height: { ideal: 720 },
+        width: { ideal: 1280 },
+      },
+    });
+    expect(mediaPipeMocks.forVisionTasks).not.toHaveBeenCalled();
+    expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
+    expect(audioContextInstances).toHaveLength(0);
+
+    await act(async () => {
+      cameraPermission.resolve(cameraStream());
+      await cameraPermission.promise;
+    });
 
     await waitFor(() =>
       expect(mediaPipeMocks.createFromOptions).toHaveBeenCalledTimes(1)
     );
-    expect(requestUserMedia).not.toHaveBeenCalled();
+    expect(mediaPipeMocks.forVisionTasks).toHaveBeenCalledWith(
+      '/mediapipe/wasm-0.10.35'
+    );
+    expect(mediaPipeMocks.createFromOptions).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        baseOptions: expect.objectContaining({
+          modelAssetPath: '/models/hand_landmarker-0.10.35.task',
+        }),
+      })
+    );
     expect(audioContextInstances).toHaveLength(0);
-    expect(screen.getByRole('button', { name: 'Start playing' })).toBeEnabled();
   });
 
-  it('shows an actionable camera-denied error and closes audio', async () => {
+  it('creates AudioContext only after Tap for sound is selected', async () => {
+    requestUserMedia.mockResolvedValue(cameraStream());
+    render(<GestureSynthStage />);
+
+    const soundButton = await screen.findByRole('button', {
+      name: 'Tap for sound',
+    });
+    expect(audioContextInstances).toHaveLength(0);
+
+    fireEvent.click(soundButton);
+
+    await waitFor(() => expect(audioContextInstances).toHaveLength(1));
+    expect(
+      screen.queryByRole('button', { name: 'Tap for sound' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows an actionable camera-denied error without loading tracking or audio', async () => {
     requestUserMedia.mockRejectedValue(
       new DOMException('Permission denied by test', 'NotAllowedError')
     );
     render(<GestureSynthStage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start playing' }));
-
     expect(await screen.findByText('Camera access is blocked')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled();
-    expect(audioContextInstances).toHaveLength(1);
-    expect(audioContextInstances[0].close).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('link', { name: 'Camera help' })).toHaveAttribute(
+      'href',
+      '/camera-permission-help'
+    );
+    expect(screen.getByRole('button', { name: 'Try camera' })).toBeEnabled();
+    expect(mediaPipeMocks.forVisionTasks).not.toHaveBeenCalled();
+    expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
+    expect(audioContextInstances).toHaveLength(0);
+  });
+
+  it('keeps camera help out of tracking-model failures', async () => {
+    requestUserMedia.mockResolvedValue(cameraStream());
+    mediaPipeMocks.createFromOptions.mockRejectedValue(
+      new Error('Tracking model test failure')
+    );
+    render(<GestureSynthStage />);
+
+    expect(
+      await screen.findByText('Hand tracking could not load')
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('link', { name: 'Camera help' })
+    ).not.toBeInTheDocument();
   });
 
   it('stops camera, frame callbacks, audio, and tracking on unmount', async () => {
     requestUserMedia.mockResolvedValue(cameraStream());
     const view = render(<GestureSynthStage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start playing' }));
-    expect(
-      await screen.findByRole('button', {
-        name: 'Start MP4 performance recording',
-      })
-    ).toBeEnabled();
+    const soundButton = await screen.findByRole('button', {
+      name: 'Tap for sound',
+    });
+    fireEvent.click(soundButton);
+    await waitFor(() => expect(audioContextInstances).toHaveLength(1));
 
     view.unmount();
     expect(cameraTrackStop).toHaveBeenCalledTimes(1);
     expect(cancelVideoFrame).toHaveBeenCalledWith(7);
     expect(audioContextInstances[0].close).toHaveBeenCalledTimes(1);
     expect(mediaPipeMocks.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops a camera stream that resolves after unmount', async () => {
+    const cameraPermission = createDeferred<MediaStream>();
+    requestUserMedia.mockReturnValue(cameraPermission.promise);
+    const view = render(<GestureSynthStage />);
+
+    await waitFor(() => expect(requestUserMedia).toHaveBeenCalledTimes(1));
+    view.unmount();
+
+    await act(async () => {
+      cameraPermission.resolve(cameraStream());
+      await cameraPermission.promise;
+    });
+
+    await waitFor(() => expect(cameraTrackStop).toHaveBeenCalledTimes(1));
+    expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
+    expect(audioContextInstances).toHaveLength(0);
+  });
+
+  it('does not duplicate the automatic camera request in StrictMode', async () => {
+    requestUserMedia.mockResolvedValue(cameraStream());
+
+    render(
+      <StrictMode>
+        <GestureSynthStage />
+      </StrictMode>
+    );
+
+    await waitFor(() => expect(requestUserMedia).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(mediaPipeMocks.createFromOptions).toHaveBeenCalledTimes(1)
+    );
+    expect(audioContextInstances).toHaveLength(0);
   });
 
   it('automatically stops and downloads recording at five minutes', async () => {
@@ -308,10 +432,7 @@ describe('GestureSynthStage lifecycle', () => {
       });
     render(<GestureSynthStage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start playing' }));
-    const recordButton = await screen.findByRole('button', {
-      name: 'Start MP4 performance recording',
-    });
+    const recordButton = await findEnabledRecordButton();
     const canvas = screen.getByTestId('gesture-canvas') as HTMLCanvasElement;
     canvas.width = 1280;
     canvas.height = 720;
@@ -363,10 +484,7 @@ describe('GestureSynthStage lifecycle', () => {
     TestMediaRecorder.isTypeSupported.mockReturnValue(false);
     render(<GestureSynthStage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start playing' }));
-    const recordButton = await screen.findByRole('button', {
-      name: 'Start MP4 performance recording',
-    });
+    const recordButton = await findEnabledRecordButton();
     const canvas = screen.getByTestId('gesture-canvas') as HTMLCanvasElement;
     canvas.width = 1280;
     canvas.height = 720;
@@ -387,10 +505,7 @@ describe('GestureSynthStage lifecycle', () => {
       );
     render(<GestureSynthStage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start playing' }));
-    const recordButton = await screen.findByRole('button', {
-      name: 'Start MP4 performance recording',
-    });
+    const recordButton = await findEnabledRecordButton();
     const canvas = screen.getByTestId('gesture-canvas') as HTMLCanvasElement;
     canvas.width = 1280;
     canvas.height = 720;

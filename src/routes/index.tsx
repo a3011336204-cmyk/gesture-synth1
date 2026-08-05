@@ -16,6 +16,13 @@ function getAssetUrl(path: string) {
 function HomePage() {
   const homepageUrl = getHomepageUrl();
   const socialImageUrl = getAssetUrl('/images/gesture-synth-hand-tracking.jpg');
+  const tutorialVideoUrl = getAssetUrl(
+    '/videos/gesture-synth-first-chord-tutorial.mp4'
+  );
+  const tutorialPosterUrl = getAssetUrl(
+    '/images/gesture-synth-first-chord-tutorial-poster.jpg'
+  );
+  const creatorUrl = new URL('/about', envConfigs.app_url).href;
   const structuredDataJsonLd = JSON.stringify({
     '@context': 'https://schema.org',
     '@graph': [
@@ -44,12 +51,18 @@ function HomePage() {
           'Local browser processing',
         ],
         creator: {
-          '@type': 'Person',
-          name: 'Cian',
+          '@id': `${creatorUrl}#person`,
         },
         isPartOf: {
           '@id': `${homepageUrl}#website`,
         },
+      },
+      {
+        '@type': 'Person',
+        '@id': `${creatorUrl}#person`,
+        name: 'Cian',
+        url: creatorUrl,
+        email: 'mailto:a3011336204@gmail.com',
       },
       {
         '@type': 'FAQPage',
@@ -62,6 +75,22 @@ function HomePage() {
             text: answer,
           },
         })),
+      },
+      {
+        '@type': 'VideoObject',
+        '@id': `${homepageUrl}#first-chord-tutorial`,
+        name: 'Gesture Synth: Your First Chord',
+        description:
+          'A 95-second visual walkthrough of choosing a chord degree, changing major or minor, and adding right-hand voicing in Gesture Synth.',
+        thumbnailUrl: tutorialPosterUrl,
+        uploadDate: '2026-08-05',
+        duration: 'PT1M35.454S',
+        contentUrl: tutorialVideoUrl,
+        embedUrl: `${homepageUrl}#tutorial`,
+        inLanguage: 'en',
+        isPartOf: {
+          '@id': `${homepageUrl}#website`,
+        },
       },
     ],
   }).replace(/</g, '\\u003c');

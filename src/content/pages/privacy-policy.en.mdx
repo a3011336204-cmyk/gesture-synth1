@@ -11,13 +11,13 @@ Gesture Synth is designed to work without an account. Camera frames, microphone 
 
 ## Camera and Hand Tracking
 
-The browser asks for camera access only after you select **Start playing**. Camera frames are read in memory by the on-device MediaPipe hand-tracking model. Gesture Synth does not upload, store, or share those frames or the hand coordinates produced from them.
+The browser asks for camera access as soon as you open the Gesture Synth homepage. If you grant access, the live camera preview appears while the on-device MediaPipe hand-tracking model loads. Camera frames are then read in memory by that local model. Gesture Synth does not upload, store, or share those frames or the hand coordinates produced from them.
 
 You can stop camera access at any time by closing the page, revoking the browser permission, or disabling the camera. Gesture Synth stops active camera tracks when the instrument closes or restarts.
 
 ## Camera, Audio, and Recordings
 
-Synth audio is generated locally with the Web Audio API. Gesture Synth does not request microphone access during ordinary playing.
+Synth audio is generated locally with the Web Audio API. Browser autoplay rules require you to click or touch the sound control once before audio starts. Gesture Synth does not request microphone access during ordinary playing.
 
 When you choose to record, the browser asks for microphone access. Gesture Synth mixes microphone audio with the generated synth output and combines that audio with its live performance canvas, which already contains the camera view, hand landmarks, and visual feedback shown in the instrument. Recording does not open a screen-sharing prompt or access page controls, other browser tabs, application windows, or your desktop.
 
@@ -27,9 +27,9 @@ Microphone audio and recordings remain in browser memory until the recording is 
 
 When a Plausible Analytics domain is configured by the site operator, Gesture Synth may record anonymous product events such as:
 
-- Start selected.
+- Camera startup requested when the homepage opens.
 - Camera permission granted or denied.
-- Audio and hand-tracking engine ready.
+- Sound enabled and hand-tracking engine ready.
 - Two hands first recognized.
 - Recording started or downloaded.
 - An enumerated error category.

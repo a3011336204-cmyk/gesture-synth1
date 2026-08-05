@@ -24,6 +24,15 @@ function loadPage(slug: string): PageModule | null {
 
 type LoaderData = { meta: PageMeta; slug: string };
 
+function getPageUrl(slug: string) {
+  return new URL(`/${slug}`, envConfigs.app_url).href;
+}
+
+function getSocialImageUrl() {
+  return new URL('/images/gesture-synth-hand-tracking.jpg', envConfigs.app_url)
+    .href;
+}
+
 export function staticPageRouteOptions(slug: string) {
   return {
     loader: (): LoaderData => {
@@ -33,15 +42,33 @@ export function staticPageRouteOptions(slug: string) {
     },
     head: ({ loaderData }: { loaderData?: LoaderData }) => {
       if (!loaderData) return {};
+      const title = `${loaderData.meta.title} | ${envConfigs.app_name}`;
+      const canonicalUrl = getPageUrl(slug);
+      const socialImageUrl = getSocialImageUrl();
       return {
         meta: [
-          { title: `${loaderData.meta.title} | ${envConfigs.app_name}` },
+          { title },
           { name: 'description', content: loaderData.meta.description },
+          { property: 'og:title', content: title },
+          {
+            property: 'og:description',
+            content: loaderData.meta.description,
+          },
+          { property: 'og:type', content: 'website' },
+          { property: 'og:url', content: canonicalUrl },
+          { property: 'og:image', content: socialImageUrl },
+          { name: 'twitter:card', content: 'summary_large_image' },
+          { name: 'twitter:title', content: title },
+          {
+            name: 'twitter:description',
+            content: loaderData.meta.description,
+          },
+          { name: 'twitter:image', content: socialImageUrl },
         ],
         links: [
           {
             rel: 'canonical',
-            href: new URL(`/${slug}`, envConfigs.app_url).href,
+            href: canonicalUrl,
           },
         ],
       };
@@ -55,9 +82,29 @@ function StaticPage() {
   const page = loadPage(slug);
   if (!page) throw new Error(`English static page is missing: ${slug}`);
   const Content = page.default;
+  const pageUrl = getPageUrl(slug);
+  const structuredDataJsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': slug === 'contact' ? 'ContactPage' : 'WebPage',
+    '@id': `${pageUrl}#webpage`,
+    name: meta.title,
+    description: meta.description,
+    url: pageUrl,
+    inLanguage: 'en',
+    dateModified: meta.updated_at,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: envConfigs.app_name,
+      url: new URL('/', envConfigs.app_url).href,
+    },
+  }).replace(/</g, '\\u003c');
 
   return (
     <article>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: structuredDataJsonLd }}
+      />
       <header className="mb-8 border-b border-[#c7d5d3] pb-6">
         <p className="font-mono text-xs font-semibold text-[#137b75] uppercase">
           Gesture Synth
@@ -66,9 +113,12 @@ function StaticPage() {
           {meta.title}
         </h1>
         <p className="mt-3 text-sm text-[#5b7073]">{meta.description}</p>
-        <p className="mt-3 text-xs text-[#75878a]">
+        <time
+          dateTime={meta.updated_at}
+          className="mt-3 block text-xs text-[#75878a]"
+        >
           Last updated: {meta.updated_at}
-        </p>
+        </time>
       </header>
       <div className="text-[15px] leading-7 text-[#344c50]">
         <Content />

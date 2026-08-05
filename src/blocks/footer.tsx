@@ -34,6 +34,9 @@ export function Footer() {
                 <a href="/how-it-works" className="hover:text-white">
                   How It Works
                 </a>
+                <a href="/compatibility" className="hover:text-white">
+                  Compatibility
+                </a>
               </div>
             </div>
             <div>
@@ -44,6 +47,9 @@ export function Footer() {
                 </a>
                 <a href="#faq" className="hover:text-white">
                   FAQ
+                </a>
+                <a href="/camera-permission-help" className="hover:text-white">
+                  Camera help
                 </a>
               </div>
             </div>
@@ -58,6 +64,9 @@ export function Footer() {
                 </a>
                 <a href="/contact" className="hover:text-white">
                   Contact
+                </a>
+                <a href="/about" className="hover:text-white">
+                  About Cian
                 </a>
               </div>
             </div>

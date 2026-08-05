@@ -68,3 +68,8 @@ package-lock.json
 
 # local SEO audit cache
 .seo-cache/
+
+# local browser and image-generation artifacts
+/.playwright-cli/
+/output/
+/outputs/

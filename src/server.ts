@@ -11,6 +11,40 @@ import { paraglideMiddleware } from './paraglide/server.js';
 const CF_WORKERS_MODULE = 'cloudflare:workers';
 let cfEnvPromise: Promise<void> | null = null;
 
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https:",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data: https:",
+  "font-src 'self' data:",
+  "media-src 'self' blob: data:",
+  "connect-src 'self' https: ws: wss:",
+  "worker-src 'self' blob:",
+  "frame-src 'self' https:",
+].join('; ');
+
+function setSecurityHeaders(response: Response, request: Request): void {
+  response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(self), microphone=(self), geolocation=(), payment=(), usb=()'
+  );
+
+  if (new URL(request.url).protocol === 'https:') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=63072000; includeSubDomains; preload'
+    );
+  }
+}
+
 function ensureCloudflareEnv(): Promise<void> {
   if (!cfEnvPromise) {
     cfEnvPromise = import(/* @vite-ignore */ CF_WORKERS_MODULE)
@@ -30,6 +64,7 @@ export default {
   async fetch(req: Request): Promise<Response> {
     await ensureCloudflareEnv();
     const response = await paraglideMiddleware(req, () => handler.fetch(req));
+    setSecurityHeaders(response, req);
     const utmSource = new URL(req.url).searchParams.get('utm_source');
     const existing = getCookieFromHeader(
       req.headers.get('cookie'),
