@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AudioWaveform, Menu, X } from 'lucide-react';
-
-import { envConfigs } from '@/config';
+import { Menu, X } from 'lucide-react';
 
 const NAVIGATION = [
   { href: '#features', label: 'Features' },
@@ -18,13 +16,14 @@ export function Header() {
   return (
     <header className="absolute inset-x-0 top-0 z-50 text-white">
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
-        <a href="/" className="flex items-center gap-2.5" aria-label="Home">
-          <span className="grid size-9 place-items-center rounded-full border border-white/35 bg-black/10 backdrop-blur">
-            <AudioWaveform className="size-5" strokeWidth={1.8} />
-          </span>
-          <span className="text-base font-semibold sm:text-lg">
-            {envConfigs.app_name}
-          </span>
+        <a href="/" className="flex items-center" aria-label="Home">
+          <img
+            src="/images/gesture-synth-logo.png"
+            alt=""
+            width={512}
+            height={512}
+            className="size-10 object-contain sm:size-11"
+          />
         </a>
 
         <nav

@@ -113,11 +113,11 @@ export function GestureSynthHome() {
               {envConfigs.app_name}
             </h1>
             <p className="mt-5 text-2xl font-semibold text-white/95 sm:text-3xl">
-              Make music with both hands.
+              An online gesture synthesizer for music lovers.
             </p>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
-              Turn gestures into chords, tone, and movement. Nothing to install,
-              nothing to learn before you begin.
+              Play music with both hands, shape chords and tone with movement,
+              then record a short performance when inspiration hits.
             </p>
           </div>
 
@@ -141,9 +141,17 @@ export function GestureSynthHome() {
                 A complete instrument, already in your browser
               </h2>
               <p className="mt-5 max-w-md text-base leading-7 text-[#496266]">
-                Gesture Synth turns camera input into responsive musical control
-                without accounts, downloads, or specialist hardware.
+                This online gesture synthesizer turns camera input into
+                responsive musical control without accounts, downloads, or
+                specialist hardware. Learn how hand tracking, browser support,
+                recording, and privacy work before you play.
               </p>
+              <a
+                href="/how-it-works"
+                className="mt-5 inline-flex text-sm font-semibold text-[#137b75] hover:text-[#0b5550]"
+              >
+                Read how Gesture Synth works
+              </a>
             </div>
 
             <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2">
@@ -280,11 +288,17 @@ export function GestureSynthHome() {
               </div>
             </div>
             <div className="flex shrink-0 gap-5 text-sm font-semibold text-[#137b75]">
+              <a href="/how-it-works" className="hover:text-[#0b5550]">
+                How it works
+              </a>
               <a href="/privacy-policy" className="hover:text-[#0b5550]">
                 Privacy
               </a>
               <a href="/terms-of-service" className="hover:text-[#0b5550]">
                 Terms
+              </a>
+              <a href="/contact" className="hover:text-[#0b5550]">
+                Contact
               </a>
             </div>
           </div>

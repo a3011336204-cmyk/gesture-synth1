@@ -35,8 +35,12 @@ export const Route = createRootRoute({
       { name: 'google', content: 'notranslate' },
     ],
     links: [
-      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
-      { rel: 'apple-touch-icon', href: '/logo.svg' },
+      {
+        rel: 'icon',
+        href: '/images/gesture-synth-logo.png',
+        type: 'image/png',
+      },
+      { rel: 'apple-touch-icon', href: '/images/gesture-synth-logo.png' },
     ],
   }),
   component: RootComponent,

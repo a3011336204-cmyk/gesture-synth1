@@ -26,7 +26,7 @@ MediaPipe model, but camera permission and Web Audio only start after clicking
 ```env
 VITE_APP_URL=http://localhost:3000
 VITE_APP_NAME=Gesture Synth
-VITE_APP_DESCRIPTION=Make music with both hands in a free, private browser instrument.
+VITE_APP_DESCRIPTION=Gesture Synth is a free online gesture synthesizer. Play music with both hands, shape chords and tone, and record performances locally in your browser.
 
 # Optional anonymous analytics
 VITE_PLAUSIBLE_DOMAIN=

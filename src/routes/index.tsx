@@ -18,15 +18,37 @@ function HomePage() {
 }
 
 export const Route = createFileRoute('/')({
-  head: () => ({
-    meta: [
-      { title: `${envConfigs.app_name} | Make music with both hands` },
-      { name: 'description', content: envConfigs.app_description },
-      { property: 'og:title', content: envConfigs.app_name },
-      { property: 'og:description', content: envConfigs.app_description },
-      { property: 'og:image', content: '/images/gesture-synth-landscape.jpg' },
-    ],
-    links: [{ rel: 'canonical', href: `${envConfigs.app_url}/` }],
-  }),
+  head: () => {
+    const homepageUrl = new URL('/', envConfigs.app_url).href;
+    const socialImageUrl = new URL(
+      '/images/gesture-synth-landscape.jpg',
+      envConfigs.app_url
+    ).href;
+
+    return {
+      meta: [
+        {
+          title: `${envConfigs.app_name} | Online Gesture Synthesizer`,
+        },
+        { name: 'description', content: envConfigs.app_description },
+        {
+          property: 'og:title',
+          content: `${envConfigs.app_name} | Online Gesture Synthesizer`,
+        },
+        { property: 'og:description', content: envConfigs.app_description },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: homepageUrl },
+        { property: 'og:image', content: socialImageUrl },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        {
+          name: 'twitter:title',
+          content: `${envConfigs.app_name} | Online Gesture Synthesizer`,
+        },
+        { name: 'twitter:description', content: envConfigs.app_description },
+        { name: 'twitter:image', content: socialImageUrl },
+      ],
+      links: [{ rel: 'canonical', href: homepageUrl }],
+    };
+  },
   component: HomePage,
 });

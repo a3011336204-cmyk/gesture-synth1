@@ -33,9 +33,13 @@ export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <Link href="/" className="flex items-center">
-          <span className="font-serif text-lg italic">
-            {envConfigs.app_name}
-          </span>
+          <img
+            src="/images/gesture-synth-logo.png"
+            alt={envConfigs.app_name}
+            width={512}
+            height={512}
+            className="size-10 object-contain"
+          />
         </Link>
 
         {/* Desktop nav */}

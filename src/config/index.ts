@@ -19,7 +19,7 @@ export const envConfigs: Record<string, string> = {
   app_name: publicEnv('VITE_APP_NAME') ?? 'Gesture Synth',
   app_description:
     publicEnv('VITE_APP_DESCRIPTION') ??
-    'Make music with both hands in a free, private browser instrument.',
+    'Gesture Synth is a free online gesture synthesizer. Play music with both hands, shape chords and tone, and record performances locally in your browser.',
   plausible_domain: publicEnv('VITE_PLAUSIBLE_DOMAIN') ?? '',
   plausible_src: publicEnv('VITE_PLAUSIBLE_SRC') ?? '',
 

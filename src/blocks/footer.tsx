@@ -1,7 +1,4 @@
-import { AudioWaveform } from 'lucide-react';
-
 import { envConfigs } from '@/config';
-import { BuiltWithShipAny } from '@/components/built-with-shipany';
 
 export function Footer() {
   return (
@@ -10,11 +7,17 @@ export function Footer() {
         <div className="flex flex-col gap-10 border-b border-white/10 pb-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm">
             <a href="/" className="inline-flex items-center gap-2.5">
-              <AudioWaveform className="size-5 text-[#75dfd2]" />
+              <img
+                src="/images/gesture-synth-logo.png"
+                alt=""
+                width={512}
+                height={512}
+                className="size-7 object-contain"
+              />
               <span className="font-semibold">{envConfigs.app_name}</span>
             </a>
             <p className="mt-4 text-sm leading-6 text-white/55">
-              A free, browser-native instrument controlled by your hands.
+              A free online gesture synthesizer for music lovers.
             </p>
           </div>
 
@@ -25,7 +28,7 @@ export function Footer() {
                 <a href="#features" className="hover:text-white">
                   Features
                 </a>
-                <a href="#how-it-works" className="hover:text-white">
+                <a href="/how-it-works" className="hover:text-white">
                   How It Works
                 </a>
               </div>
@@ -50,14 +53,16 @@ export function Footer() {
                 <a href="/terms-of-service" className="hover:text-white">
                   Terms
                 </a>
+                <a href="/contact" className="hover:text-white">
+                  Contact
+                </a>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <BuiltWithShipAny className="w-fit" />
-          <p className="text-xs text-white/45">
+        <div className="flex justify-end pt-6">
+          <p className="text-right text-xs text-white/45">
             &copy; {new Date().getFullYear()} {envConfigs.app_name}. Free to
             play.
           </p>
