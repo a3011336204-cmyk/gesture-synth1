@@ -47,9 +47,9 @@ const FIRST_CHORD_STEPS = [
     label: 'Set up',
     title: 'Allow the camera',
     description:
-      'Gesture Synth requests camera access when the homepage opens. Allow it to see the live preview while local hand tracking loads, then click or tap Tap for sound once. Keep both hands in view, use clear lighting, and leave enough room to move comfortably.',
+      'Gesture Synth requests camera access when the homepage opens. Allow it to see the live preview, then select the center play button while local hand tracking loads. Keep both hands in view, use clear lighting, and leave enough room to move comfortably.',
     practiceNote:
-      'Sound needs one click or touch, and both hands are needed to play a chord.',
+      'Select the center play button once, then use both hands to play a chord.',
     image: '/images/gesture-synth-tutorial-start.jpg',
     imageAlt:
       'Music lover seated at a laptop with both hands comfortably visible in front of the camera',
@@ -128,7 +128,7 @@ export const FAQ_ITEMS = [
   {
     question: 'Is Gesture Synth really free?',
     answer:
-      'Yes. The instrument is free to use and does not require an account, subscription, or payment method. After the camera preview appears and hand tracking is ready, choose a key and sound from the stage controls, then click or tap Tap for sound once.',
+      'Yes. The instrument is free to use and does not require an account, subscription, or payment method. After the camera preview appears, select the center play button, then choose a key and sound from the controls while local hand tracking finishes loading.',
   },
   {
     question: 'Does my camera footage leave my device?',
@@ -201,9 +201,9 @@ export function GestureSynthHome() {
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
               Use both hands to shape harmony, chord voicing, octave, volume,
               and filter in real time. The camera request appears when this page
-              opens; after the live preview appears, tap once to enable sound.
-              When an idea clicks, record a short local performance without
-              creating an account.
+              opens; after the live preview appears, select the center play
+              button to enable sound. When an idea clicks, record a short local
+              performance without creating an account.
             </p>
           </div>
 
@@ -370,12 +370,12 @@ export function GestureSynthHome() {
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-white/64">
-              Allow camera access, tap once for sound, make an I major chord
-              with your left hand, then add a root-position voice with your
-              right. This is the shortest path from camera permission to a
-              playable sound. Let the visual readout settle before changing the
-              next gesture; it makes the connection between movement and music
-              easier to hear.
+              Allow camera access, select the center play button, make an I
+              major chord with your left hand, then add a root-position voice
+              with your right. This is the shortest path from camera permission
+              to a playable sound. Let the visual readout settle before changing
+              the next gesture; it makes the connection between movement and
+              music easier to hear.
             </p>
           </div>
 

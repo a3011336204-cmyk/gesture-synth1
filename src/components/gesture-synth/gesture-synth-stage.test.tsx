@@ -297,6 +297,9 @@ describe('GestureSynthStage lifecycle', () => {
     expect(mediaPipeMocks.forVisionTasks).not.toHaveBeenCalled();
     expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
     expect(audioContextInstances).toHaveLength(0);
+    expect(
+      screen.queryByRole('button', { name: 'Start playing' })
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       cameraPermission.resolve(cameraStream());
@@ -318,22 +321,30 @@ describe('GestureSynthStage lifecycle', () => {
       })
     );
     expect(audioContextInstances).toHaveLength(0);
+    expect(
+      await screen.findByRole('button', { name: 'Start playing' })
+    ).toBeVisible();
   });
 
-  it('creates AudioContext only after Tap for sound is selected', async () => {
+  it('creates AudioContext only after the centered Start playing control is selected', async () => {
     requestUserMedia.mockResolvedValue(cameraStream());
     render(<GestureSynthStage />);
 
     const soundButton = await screen.findByRole('button', {
-      name: 'Tap for sound',
+      name: 'Start playing',
     });
+    expect(soundButton.parentElement).toHaveClass(
+      'absolute',
+      'inset-0',
+      'place-items-center'
+    );
     expect(audioContextInstances).toHaveLength(0);
 
     fireEvent.click(soundButton);
 
     await waitFor(() => expect(audioContextInstances).toHaveLength(1));
     expect(
-      screen.queryByRole('button', { name: 'Tap for sound' })
+      screen.queryByRole('button', { name: 'Start playing' })
     ).not.toBeInTheDocument();
   });
 
@@ -374,7 +385,7 @@ describe('GestureSynthStage lifecycle', () => {
     const view = render(<GestureSynthStage />);
 
     const soundButton = await screen.findByRole('button', {
-      name: 'Tap for sound',
+      name: 'Start playing',
     });
     fireEvent.click(soundButton);
     await waitFor(() => expect(audioContextInstances).toHaveLength(1));

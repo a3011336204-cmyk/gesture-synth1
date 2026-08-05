@@ -19,9 +19,10 @@ pnpm dev
 
 Open `http://localhost:3000/`. The page immediately requests camera access. If
 permission is granted, the live camera preview appears while the local
-MediaPipe model and WASM runtime load for on-device hand tracking. Browser
-autoplay rules still require one click or touch on `Tap for sound` before Web
-Audio starts. Microphone permission is requested only when recording starts.
+MediaPipe model and WASM runtime load for on-device hand tracking. Once the
+live preview appears, the centered play button unlocks Web Audio in the
+required browser click or touch. Microphone permission is requested only when
+recording starts.
 
 ## Public Configuration
 

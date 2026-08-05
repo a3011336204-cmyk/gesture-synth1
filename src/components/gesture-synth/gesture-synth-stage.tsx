@@ -21,9 +21,9 @@ import {
   LoaderCircle,
   Maximize2,
   Minimize2,
+  Play,
   RotateCcw,
   Square,
-  Volume2,
   X,
 } from 'lucide-react';
 
@@ -975,7 +975,7 @@ export function GestureSynthStage() {
     }
     if (!(await enableAudio())) {
       setRecordingFailure(
-        'Sound could not start. Tap the sound button, then try recording again.'
+        'Sound could not start. Select Start playing, then try recording again.'
       );
       return;
     }
@@ -1151,12 +1151,12 @@ export function GestureSynthStage() {
       : cameraReady
         ? 'Camera on · Starting hand tracking'
         : 'Waiting for camera permission';
-  const audioActionLabel =
+  const startPlayingLabel =
     audioStatus === 'starting'
       ? 'Starting sound'
       : audioStatus === 'error'
-        ? 'Retry sound'
-        : 'Tap for sound';
+        ? 'Try sound again'
+        : 'Start playing';
   const showCameraHelp =
     stageError?.code === 'camera_denied' ||
     stageError?.code === 'camera_missing' ||
@@ -1377,29 +1377,32 @@ export function GestureSynthStage() {
         </div>
       )}
 
-      {sessionStatus !== 'error' &&
+      {cameraReady &&
+        sessionStatus !== 'error' &&
         audioStatus !== 'ready' &&
         !recordingFailure && (
-          <button
-            type="button"
-            onClick={() => void enableAudio()}
-            disabled={audioStatus === 'starting'}
-            className={cn(
-              'absolute right-3 bottom-3 z-30 inline-flex min-h-10 items-center gap-2 rounded-md border bg-[#07111f]/90 px-3 font-mono text-[10px] backdrop-blur transition-colors sm:right-4 sm:bottom-4 sm:text-xs',
-              audioStatus === 'error'
-                ? 'border-amber-300/35 text-amber-100 hover:bg-[#1d1710]'
-                : 'border-white/10 text-white/65 hover:bg-white/10 hover:text-white'
-            )}
-            aria-label={audioActionLabel}
-            title={audioFailure ?? 'Enable browser sound for Gesture Synth'}
-          >
-            {audioStatus === 'starting' ? (
-              <LoaderCircle className="size-4 animate-spin text-[#75dfd2]" />
-            ) : (
-              <Volume2 className="size-4 text-[#75dfd2]" />
-            )}
-            {audioActionLabel}
-          </button>
+          <div className="absolute inset-0 z-40 grid place-items-center bg-[#061a24]/20 p-5">
+            <button
+              type="button"
+              onClick={() => void enableAudio()}
+              disabled={audioStatus === 'starting'}
+              className={cn(
+                'grid size-20 place-items-center rounded-full border border-[#ffe1a7]/65 bg-[#e8a13d]/45 text-[#fff5e3] shadow-[0_0_0_1px_rgba(8,18,24,0.12),0_14px_36px_rgba(0,0,0,0.3)] backdrop-blur-[2px] transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-1 hover:scale-[1.06] hover:border-[#fff0c9]/90 hover:bg-[#e8a13d]/75 hover:shadow-[0_0_0_8px_rgba(232,161,61,0.16),0_22px_44px_rgba(0,0,0,0.42)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff0c9] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-85 sm:size-24',
+                audioStatus === 'error' && 'border-amber-100/90 bg-[#c6761a]/65'
+              )}
+              aria-label={startPlayingLabel}
+              title={audioFailure ?? 'Enable browser sound and start playing'}
+            >
+              {audioStatus === 'starting' ? (
+                <LoaderCircle className="size-8 animate-spin sm:size-9" />
+              ) : (
+                <Play
+                  className="ml-1 size-8 fill-current sm:size-9"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </div>
         )}
 
       {stageError && (
