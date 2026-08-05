@@ -28,6 +28,9 @@ export function Footer() {
                 <a href="#features" className="hover:text-white">
                   Features
                 </a>
+                <a href="#tutorial" className="hover:text-white">
+                  Tutorial
+                </a>
                 <a href="/how-it-works" className="hover:text-white">
                   How It Works
                 </a>

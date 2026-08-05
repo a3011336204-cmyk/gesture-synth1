@@ -81,6 +81,27 @@ const FIRST_CHORD_STEPS = [
   },
 ] as const;
 
+const VIDEO_TUTORIAL_CHAPTERS = [
+  {
+    number: '01',
+    title: 'Choose a chord degree',
+    description: 'Use the left hand to move between the first few degrees.',
+    time: '0:00 - 0:24',
+  },
+  {
+    number: '02',
+    title: 'Shape major or minor',
+    description: 'Tilt the left hand to hear the harmony change color.',
+    time: '0:25 - 0:48',
+  },
+  {
+    number: '03',
+    title: 'Bring in the right hand',
+    description: 'Add a voicing, then move your hand to shape the sound.',
+    time: '0:49 - 1:35',
+  },
+] as const;
+
 const PLAY_IDEAS = [
   {
     number: '01',
@@ -168,6 +189,102 @@ export function GestureSynthHome() {
           <div className="mx-auto mt-10 max-w-7xl sm:mt-12">
             <GestureSynthStage />
           </div>
+        </div>
+      </section>
+
+      <section
+        id="tutorial"
+        aria-labelledby="tutorial-heading"
+        className="scroll-mt-8 bg-[#0b1d20] py-16 text-white sm:py-20 lg:py-24"
+      >
+        <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.6fr)] lg:items-center lg:gap-20 lg:px-12">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold text-[#e8a13d] uppercase">
+              Video tutorial
+            </p>
+            <h2
+              id="tutorial-heading"
+              className="mt-4 text-3xl font-bold sm:text-4xl"
+            >
+              See Gesture Synth in motion
+            </h2>
+            <p className="mt-5 max-w-xl text-base leading-7 text-white/68">
+              Learn the gesture map in 95 seconds, then open the instrument
+              while the hand movement is still fresh. The written steps stay
+              here when you need a quick reminder while you play.
+            </p>
+
+            <ol className="mt-9 divide-y divide-white/14 border-y border-white/14">
+              {VIDEO_TUTORIAL_CHAPTERS.map(
+                ({ number, title, description, time }) => (
+                  <li
+                    key={number}
+                    className="grid grid-cols-[36px_minmax(0,1fr)_auto] gap-x-4 py-4 sm:grid-cols-[40px_minmax(0,1fr)_auto]"
+                  >
+                    <span className="grid size-7 place-items-center rounded-full border border-[#e8a13d]/80 font-mono text-xs font-bold text-[#e8a13d] sm:size-8">
+                      {number}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-bold text-white sm:text-base">
+                        {title}
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-white/58">
+                        {description}
+                      </p>
+                    </div>
+                    <span className="pt-0.5 text-right font-mono text-xs text-white/52">
+                      {time}
+                    </span>
+                  </li>
+                )
+              )}
+            </ol>
+
+            <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-center">
+              <a
+                href="#play"
+                className="inline-flex min-h-12 w-fit items-center gap-2 rounded-md bg-[#e8a13d] px-5 py-3 text-sm font-bold text-[#17292c] transition-colors hover:bg-[#ffbd64]"
+              >
+                <CirclePlay className="size-5" aria-hidden="true" />
+                Try the first chord
+              </a>
+              <p className="inline-flex items-center gap-2 text-sm font-medium text-white/62">
+                <span
+                  className="size-2 rounded-full bg-[#75dfd2]"
+                  aria-hidden="true"
+                />
+                Tested in Google Chrome
+              </p>
+            </div>
+          </div>
+
+          <figure className="mx-auto w-full max-w-[390px] lg:justify-self-end">
+            <div className="overflow-hidden rounded-md border border-white/16 bg-[#061518] shadow-[0_28px_64px_rgba(0,0,0,0.32)]">
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                width={720}
+                height={1280}
+                poster="/images/gesture-synth-first-chord-tutorial-poster.jpg"
+                aria-describedby="tutorial-video-summary"
+                className="aspect-[9/16] w-full bg-black object-contain"
+              >
+                <source
+                  src="/videos/gesture-synth-first-chord-tutorial.mp4"
+                  type="video/mp4"
+                />
+                Your browser cannot play this tutorial video.
+              </video>
+            </div>
+            <figcaption
+              id="tutorial-video-summary"
+              className="mt-4 text-sm leading-6 text-white/56"
+            >
+              A first-chord walkthrough with the live hand landmarks and chord
+              feedback visible on screen.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
