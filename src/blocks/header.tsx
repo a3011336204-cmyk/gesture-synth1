@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
+import { envConfigs } from '@/config';
+
 const NAVIGATION = [
   { href: '#features', label: 'Features' },
   { href: '/how-it-works', label: 'How It Works' },
@@ -16,10 +18,10 @@ export function Header() {
   return (
     <header className="absolute inset-x-0 top-0 z-50 text-white">
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
-        <a href="/" className="flex items-center" aria-label="Home">
+        <a href="/" className="flex items-center">
           <img
             src="/images/gesture-synth-logo.png"
-            alt=""
+            alt={`${envConfigs.app_name} logo`}
             width={512}
             height={512}
             className="size-10 object-contain sm:size-11"

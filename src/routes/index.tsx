@@ -2,40 +2,75 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
 import { Footer } from '@/blocks/footer';
-import { GestureSynthHome } from '@/blocks/gesture-synth-home';
+import { FAQ_ITEMS, GestureSynthHome } from '@/blocks/gesture-synth-home';
 import { Header } from '@/blocks/header';
 
 function getHomepageUrl() {
   return new URL('/', envConfigs.app_url).href;
 }
 
+function getAssetUrl(path: string) {
+  return new URL(path, envConfigs.app_url).href;
+}
+
 function HomePage() {
-  const webApplicationJsonLd = JSON.stringify({
+  const homepageUrl = getHomepageUrl();
+  const socialImageUrl = getAssetUrl('/images/gesture-synth-hand-tracking.jpg');
+  const structuredDataJsonLd = JSON.stringify({
     '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: envConfigs.app_name,
-    url: getHomepageUrl(),
-    description: envConfigs.app_description,
-    applicationCategory: 'Music application',
-    applicationSubCategory: 'Online gesture synthesizer',
-    isAccessibleForFree: true,
-    browserRequirements: 'Tested in Google Chrome',
-    featureList: [
-      'No sign-in required',
-      'Two-hand gesture control for chords, voicing, octave, volume, and filter',
-      'Local browser processing',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${homepageUrl}#website`,
+        name: envConfigs.app_name,
+        url: homepageUrl,
+        inLanguage: 'en',
+      },
+      {
+        '@type': 'WebApplication',
+        '@id': `${homepageUrl}#webapplication`,
+        name: envConfigs.app_name,
+        url: homepageUrl,
+        image: socialImageUrl,
+        description: envConfigs.app_description,
+        applicationCategory: 'Music application',
+        applicationSubCategory: 'Online gesture synthesizer',
+        operatingSystem: 'Web browser',
+        isAccessibleForFree: true,
+        browserRequirements: 'Tested in Google Chrome',
+        featureList: [
+          'No sign-in required',
+          'Two-hand gesture control for chords, voicing, octave, volume, and filter',
+          'Local browser processing',
+        ],
+        creator: {
+          '@type': 'Person',
+          name: 'Cian',
+        },
+        isPartOf: {
+          '@id': `${homepageUrl}#website`,
+        },
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${homepageUrl}#faq`,
+        mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: answer,
+          },
+        })),
+      },
     ],
-    creator: {
-      '@type': 'Person',
-      name: 'Cian',
-    },
   }).replace(/</g, '\\u003c');
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: webApplicationJsonLd }}
+        dangerouslySetInnerHTML={{ __html: structuredDataJsonLd }}
       />
       <div className="min-h-screen bg-[#f4f8f7] text-[#17292c]">
         <Header />
@@ -51,10 +86,9 @@ function HomePage() {
 export const Route = createFileRoute('/')({
   head: () => {
     const homepageUrl = getHomepageUrl();
-    const socialImageUrl = new URL(
-      '/images/gesture-synth-hand-tracking.jpg',
-      envConfigs.app_url
-    ).href;
+    const socialImageUrl = getAssetUrl(
+      '/images/gesture-synth-hand-tracking.jpg'
+    );
 
     return {
       meta: [

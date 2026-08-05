@@ -18,25 +18,25 @@ const FEATURES = [
     icon: Hand,
     title: 'Two-hand control',
     description:
-      'Shape harmony with your left hand, then control voicing, octave, volume, and filter with your right.',
+      'Shape harmony with your left hand, then control voicing, octave, volume, and filter with your right. The on-stage chord and quality readouts help you connect a steady hand shape with the sound you hear.',
   },
   {
     icon: AudioLines,
     title: 'Playable sound engine',
     description:
-      'Choose any of 12 keys and switch between warm, bright, and retro synth voices while you perform.',
+      'Choose any of 12 keys and switch between warm, bright, and retro synth voices while you perform. The browser-native sound engine responds as your hand position changes, so you can hear a progression take shape instead of programming it first.',
   },
   {
     icon: Download,
     title: 'Local MP4 performance recording',
     description:
-      'Capture the live synth display with its generated audio for up to five minutes, then download a real MP4.',
+      'Capture the live synth display with its generated audio for up to five minutes, then download a real MP4. When you choose Record, the browser asks for microphone access and combines that audio with the performance canvas.',
   },
   {
     icon: ShieldCheck,
     title: 'Private by design',
     description:
-      'Camera frames, microphone audio, synth audio, hand landmarks, and recordings stay local and are never uploaded.',
+      'Camera frames, microphone audio, synth audio, hand landmarks, and recordings stay local and are never uploaded. The camera starts only after you select Start playing, and ordinary playing does not request microphone access.',
   },
 ] as const;
 
@@ -47,7 +47,7 @@ const FIRST_CHORD_STEPS = [
     label: 'Set up',
     title: 'Start playing',
     description:
-      'Click Start playing, then allow camera access when your browser asks. Keep both hands in view.',
+      'Click Start playing, then allow camera access when your browser asks. Keep both hands in view, use clear lighting, and leave enough room to move comfortably. You can stop camera access later by closing the page or changing browser permissions.',
     practiceNote: 'Both hands are needed before the instrument can make sound.',
     image: '/images/gesture-synth-tutorial-start.jpg',
     imageAlt:
@@ -59,7 +59,7 @@ const FIRST_CHORD_STEPS = [
     label: 'Left hand',
     title: 'Make I major',
     description:
-      'Extend one finger on your left hand for I. Tilt inward for Major; a neutral tilt is Major too.',
+      'Extend one finger on your left hand for I. Tilt inward for Major; a neutral tilt is Major too. Keep the shape steady until the chord label settles, then try a small outward tilt to hear the minor color.',
     practiceNote:
       'The left hand chooses the chord degree and major or minor color.',
     image: '/images/gesture-synth-tutorial-left-hand.jpg',
@@ -72,7 +72,7 @@ const FIRST_CHORD_STEPS = [
     label: 'Right hand',
     title: 'Add the root',
     description:
-      'Extend one non-thumb finger on your right hand for root position. Raise your right hand for more volume; lower it for less.',
+      'Extend one non-thumb finger on your right hand for root position. Raise your right hand for more volume; lower it for less. Add another non-thumb finger to hear a first inversion, then change only one control at a time.',
     practiceNote:
       'Keep the left-hand I major shape steady while you change the sound.',
     image: '/images/gesture-synth-tutorial-right-hand.jpg',
@@ -86,42 +86,42 @@ const PLAY_IDEAS = [
     number: '01',
     title: 'Find a progression',
     description:
-      'Choose a key, then use the left hand to move between chord degrees and major or minor color.',
+      'Choose a key, then use the left hand to move between chord degrees and major or minor color. The chord readout gives you a note name and quality to follow as you move.',
   },
   {
     number: '02',
     title: 'Give it a character',
     description:
-      'Use the right hand to change voicing, octave, volume, and filter one movement at a time.',
+      'Use the right hand to change voicing, octave, volume, and filter one movement at a time. Thumb position changes octave, while right-hand tilt changes the filter response.',
   },
   {
     number: '03',
     title: 'Keep the moment',
     description:
-      'When a short idea lands, record it locally as an MP4 on supported browsers and choose where to share it.',
+      'When a short idea lands, record it locally as an MP4 on supported browsers and choose where to share it. The downloaded file stays on your device, and Gesture Synth has no publishing workflow.',
   },
 ] as const;
 
-const FAQ_ITEMS = [
+export const FAQ_ITEMS = [
   {
     question: 'Is Gesture Synth really free?',
     answer:
-      'Yes. The instrument is free to use and does not require an account, subscription, or payment method.',
+      'Yes. The instrument is free to use and does not require an account, subscription, or payment method. After you start the instrument, choose a key and sound from the controls in the stage.',
   },
   {
     question: 'Does my camera footage leave my device?',
     answer:
-      'No. Hand detection, microphone mixing, and recording run in your browser. Camera frames, landmarks, microphone audio, synth audio, and recordings are not sent to our servers.',
+      'No. Hand detection, microphone mixing, and recording run in your browser. Camera frames, landmarks, microphone audio, synth audio, and recordings are not sent to our servers. You can stop camera access by closing the page, revoking the browser permission, or disabling the camera on your device.',
   },
   {
     question: 'Which browsers work best?',
     answer:
-      'Gesture Synth has been tested in Google Chrome. Camera access, hand tracking, sound, canvas capture, and MP4 recording depend on the browser and device you use, so other browsers are not promised.',
+      'Gesture Synth has been tested in Google Chrome. Camera access, hand tracking, sound, canvas capture, and MP4 recording depend on the browser and device you use, so other browsers are not promised. If a feature is unavailable, read the specific message shown in the instrument before trying again.',
   },
   {
     question: 'What do my hands control?',
     answer:
-      'Your left hand selects scale degree and major or minor mode. Your right hand controls chord voicing, octave, volume, and filter.',
+      'Your left hand selects scale degree and major or minor mode. Your right hand controls chord voicing, octave, volume, and filter. One non-thumb finger on the right selects root position, while two selects a first inversion.',
   },
   {
     question: 'What does the recording include?',
@@ -159,8 +159,9 @@ export function GestureSynthHome() {
               Make chords with your hands.
             </p>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
-              Play music with both hands, shape chords and tone with movement,
-              then record a short performance when inspiration hits.
+              Use both hands to shape harmony, chord voicing, octave, volume,
+              and filter in real time. When an idea clicks, record a short local
+              performance without creating an account.
             </p>
           </div>
 
@@ -187,7 +188,9 @@ export function GestureSynthHome() {
                 This online gesture synthesizer turns camera input into
                 responsive musical control without accounts, downloads, or
                 specialist hardware. Learn how hand tracking, browser support,
-                recording, and privacy work before you play.
+                recording, and privacy work before you play. Practice a
+                progression, explore a sound, or sketch a musical idea from a
+                laptop browser.
               </p>
               <a
                 href="/how-it-works"
@@ -231,7 +234,9 @@ export function GestureSynthHome() {
             <p className="max-w-xl text-base leading-7 text-white/64">
               Start playing, make an I major chord with your left hand, then add
               a root-position voice with your right. This is the shortest path
-              from camera permission to a playable sound.
+              from camera permission to a playable sound. Let the visual readout
+              settle before changing the next gesture; it makes the connection
+              between movement and music easier to hear.
             </p>
           </div>
 
@@ -281,7 +286,9 @@ export function GestureSynthHome() {
           <div className="mt-12 flex flex-col gap-6 border-y border-white/16 py-7 sm:mt-14 lg:flex-row lg:items-center lg:justify-between">
             <p className="max-w-3xl text-sm leading-7 text-white/68">
               Ready to capture it? Use the red Record control to request
-              microphone access and save a local MP4 on supported browsers.
+              microphone access and save a local MP4 on supported browsers. The
+              downloaded MP4 captures the performance stage only, not the rest
+              of your screen.
             </p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-semibold">
               <a
@@ -336,7 +343,9 @@ export function GestureSynthHome() {
               <p className="mt-5 max-w-xl text-base leading-7 text-[#496266]">
                 Gesture Synth is built for the moment before an idea becomes a
                 full track: explore a progression, shape its feel, then capture
-                a short take while it is still fresh.
+                a short take while it is still fresh. Try a familiar I-IV-V
+                movement, test a chord voicing, or find a texture before opening
+                a larger music project.
               </p>
 
               <div className="mt-8 divide-y divide-[#b8ccca] border-y border-[#b8ccca]">
@@ -382,7 +391,9 @@ export function GestureSynthHome() {
                 Recording starts only when you choose it and may ask for
                 microphone access. On supported browsers, Gesture Synth mixes
                 the live visual, your microphone, and the generated synth into a
-                local MP4 download. There is no built-in publishing step.
+                local MP4 download. There is no built-in publishing step. The
+                MP4 captures only the performance canvas, not page controls,
+                other tabs, application windows, or your desktop screen.
               </p>
               <a
                 href="/how-it-works"
@@ -427,7 +438,9 @@ export function GestureSynthHome() {
             <p className="mt-5 max-w-xl text-base leading-7 text-white/60">
               MediaPipe estimates 21 landmarks per hand. A lightweight gesture
               mapper turns those positions into stable musical states, then Web
-              Audio responds without a server round trip.
+              Audio responds without a server round trip. The tracker tries GPU
+              processing first and falls back to CPU when needed, giving
+              compatible devices a second path to start the instrument.
             </p>
           </div>
 
