@@ -5,23 +5,54 @@ import { Footer } from '@/blocks/footer';
 import { GestureSynthHome } from '@/blocks/gesture-synth-home';
 import { Header } from '@/blocks/header';
 
+function getHomepageUrl() {
+  return new URL('/', envConfigs.app_url).href;
+}
+
 function HomePage() {
+  const webApplicationJsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: envConfigs.app_name,
+    url: getHomepageUrl(),
+    description: envConfigs.app_description,
+    applicationCategory: 'Music application',
+    applicationSubCategory: 'Online gesture synthesizer',
+    isAccessibleForFree: true,
+    browserRequirements: 'Tested in Google Chrome',
+    featureList: [
+      'No sign-in required',
+      'Two-hand gesture control for chords, voicing, octave, volume, and filter',
+      'Local browser processing',
+    ],
+    creator: {
+      '@type': 'Person',
+      name: 'Cian',
+    },
+  }).replace(/</g, '\\u003c');
+
   return (
-    <div className="min-h-screen bg-[#f4f8f7] text-[#17292c]">
-      <Header />
-      <main>
-        <GestureSynthHome />
-      </main>
-      <Footer />
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: webApplicationJsonLd }}
+      />
+      <div className="min-h-screen bg-[#f4f8f7] text-[#17292c]">
+        <Header />
+        <main>
+          <GestureSynthHome />
+        </main>
+        <Footer />
+      </div>
+    </>
   );
 }
 
 export const Route = createFileRoute('/')({
   head: () => {
-    const homepageUrl = new URL('/', envConfigs.app_url).href;
+    const homepageUrl = getHomepageUrl();
     const socialImageUrl = new URL(
-      '/images/gesture-synth-landscape.jpg',
+      '/images/gesture-synth-hand-tracking.jpg',
       envConfigs.app_url
     ).href;
 

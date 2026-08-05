@@ -5,7 +5,7 @@ import { Menu, X } from 'lucide-react';
 
 const NAVIGATION = [
   { href: '#features', label: 'Features' },
-  { href: '#how-it-works', label: 'How It Works' },
+  { href: '/how-it-works', label: 'How It Works' },
   { href: '#technology', label: 'Technology' },
   { href: '#faq', label: 'FAQ' },
 ] as const;

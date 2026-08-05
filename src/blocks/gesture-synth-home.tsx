@@ -1,13 +1,13 @@
 import {
+  ArrowUpRight,
   AudioLines,
   Camera,
+  CirclePlay,
   Download,
   Hand,
   LockKeyhole,
-  MousePointerClick,
   ShieldCheck,
   Sparkles,
-  Waves,
 } from 'lucide-react';
 
 import { envConfigs } from '@/config';
@@ -40,23 +40,65 @@ const FEATURES = [
   },
 ] as const;
 
-const STEPS = [
-  {
-    icon: MousePointerClick,
-    title: 'Start the instrument',
-    description: 'Open the stage and click Start playing. No account or setup.',
-  },
+const FIRST_CHORD_STEPS = [
   {
     icon: Camera,
-    title: 'Allow camera access',
+    number: '01',
+    label: 'Set up',
+    title: 'Start playing',
     description:
-      'Your browser connects the front camera for on-device tracking.',
+      'Click Start playing, then allow camera access when your browser asks. Keep both hands in view.',
+    practiceNote: 'Both hands are needed before the instrument can make sound.',
+    image: '/images/gesture-synth-tutorial-start.jpg',
+    imageAlt:
+      'Music lover seated at a laptop with both hands comfortably visible in front of the camera',
   },
   {
-    icon: Waves,
-    title: 'Move, listen, record',
+    icon: Hand,
+    number: '02',
+    label: 'Left hand',
+    title: 'Make I major',
     description:
-      'Bring both hands into view, then allow microphone access only when you choose to record.',
+      'Extend one finger on your left hand for I. Tilt inward for Major; a neutral tilt is Major too.',
+    practiceNote:
+      'The left hand chooses the chord degree and major or minor color.',
+    image: '/images/gesture-synth-tutorial-left-hand.jpg',
+    imageAlt:
+      'Left hand with one index finger raised against a dark teal studio background',
+  },
+  {
+    icon: AudioLines,
+    number: '03',
+    label: 'Right hand',
+    title: 'Add the root',
+    description:
+      'Extend one non-thumb finger on your right hand for root position. Raise your right hand for more volume; lower it for less.',
+    practiceNote:
+      'Keep the left-hand I major shape steady while you change the sound.',
+    image: '/images/gesture-synth-tutorial-right-hand.jpg',
+    imageAlt:
+      'Right hand with one index finger raised against a dark teal studio background',
+  },
+] as const;
+
+const PLAY_IDEAS = [
+  {
+    number: '01',
+    title: 'Find a progression',
+    description:
+      'Choose a key, then use the left hand to move between chord degrees and major or minor color.',
+  },
+  {
+    number: '02',
+    title: 'Give it a character',
+    description:
+      'Use the right hand to change voicing, octave, volume, and filter one movement at a time.',
+  },
+  {
+    number: '03',
+    title: 'Keep the moment',
+    description:
+      'When a short idea lands, record it locally as an MP4 on supported browsers and choose where to share it.',
   },
 ] as const;
 
@@ -74,7 +116,7 @@ const FAQ_ITEMS = [
   {
     question: 'Which browsers work best?',
     answer:
-      'Use the latest or previous major release of Chrome, Edge, or Safari. MP4 recording requires microphone access, canvas capture, and MP4 MediaRecorder support. Firefox and mobile recording are supported on a best-effort basis.',
+      'Gesture Synth has been tested in Google Chrome. Camera access, hand tracking, sound, canvas capture, and MP4 recording depend on the browser and device you use, so other browsers are not promised.',
   },
   {
     question: 'What do my hands control?',
@@ -97,6 +139,7 @@ export function GestureSynthHome() {
   return (
     <>
       <section
+        id="play"
         className="relative isolate overflow-hidden bg-[#176a98] bg-cover bg-center text-white"
         style={{
           backgroundImage: "url('/images/gesture-synth-landscape.jpg')",
@@ -104,16 +147,16 @@ export function GestureSynthHome() {
       >
         <div className="absolute inset-0 -z-10 bg-[#0b5e91]/60" />
         <div className="mx-auto max-w-[1440px] px-4 pt-28 pb-12 sm:px-8 sm:pt-32 sm:pb-16 lg:px-12">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-5xl text-center">
             <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white/90 backdrop-blur">
               <Sparkles className="size-3.5 text-[#a9fff6]" />
               Free in your browser. No sign-up.
             </p>
-            <h1 className="mt-7 text-5xl font-bold sm:text-6xl lg:text-7xl">
-              {envConfigs.app_name}
+            <h1 className="mt-7 text-4xl font-bold sm:text-6xl lg:text-7xl">
+              {envConfigs.app_name}: Free Online Gesture Synthesizer
             </h1>
             <p className="mt-5 text-2xl font-semibold text-white/95 sm:text-3xl">
-              An online gesture synthesizer for music lovers.
+              Make chords with your hands.
             </p>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
               Play music with both hands, shape chords and tone with movement,
@@ -138,7 +181,7 @@ export function GestureSynthHome() {
                 Features
               </p>
               <h2 className="mt-4 max-w-md text-3xl font-bold text-[#102a2c] sm:text-4xl">
-                A complete instrument, already in your browser
+                A complete online gesture synthesizer, already in your browser
               </h2>
               <p className="mt-5 max-w-md text-base leading-7 text-[#496266]">
                 This online gesture synthesizer turns camera input into
@@ -173,38 +216,198 @@ export function GestureSynthHome() {
 
       <section
         id="how-it-works"
-        className="scroll-mt-8 bg-white py-20 sm:py-28"
+        className="scroll-mt-8 bg-[#0b1d20] py-20 text-white sm:py-28"
       >
         <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold text-[#b26026] uppercase">
-              How It Works
+          <div className="grid gap-8 lg:grid-cols-[1fr_0.72fr] lg:items-end lg:gap-16">
+            <div className="max-w-3xl">
+              <p className="text-xs font-bold text-[#e8a13d] uppercase">
+                First chord tutorial
+              </p>
+              <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
+                Your first chord, one movement at a time
+              </h2>
+            </div>
+            <p className="max-w-xl text-base leading-7 text-white/64">
+              Start playing, make an I major chord with your left hand, then add
+              a root-position voice with your right. This is the shortest path
+              from camera permission to a playable sound.
             </p>
-            <h2 className="mt-4 text-3xl font-bold text-[#17292c] sm:text-4xl">
-              From first click to first chord
-            </h2>
           </div>
 
-          <div className="mt-14 grid gap-10 md:grid-cols-3 md:gap-0">
-            {STEPS.map(({ icon: Icon, title, description }, index) => (
-              <article
-                key={title}
-                className="relative border-t border-[#d9e2e0] pt-6 md:border-t-0 md:border-l md:px-8 md:first:border-l-0 md:first:pl-0"
+          <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-6 lg:mt-14 lg:gap-8">
+            {FIRST_CHORD_STEPS.map(
+              ({
+                icon: Icon,
+                number,
+                label,
+                title,
+                description,
+                practiceNote,
+                image,
+                imageAlt,
+              }) => (
+                <article key={title} className="border-t border-white/16 pt-5">
+                  <div className="relative aspect-[3/2] overflow-hidden bg-[#06272b]">
+                    <img
+                      src={image}
+                      alt={imageAlt}
+                      width={1200}
+                      height={800}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-cover"
+                    />
+                    <span className="absolute top-4 left-4 border border-white/30 bg-[#0b1d20]/88 px-2.5 py-1 font-mono text-xs font-bold text-[#e8a13d] backdrop-blur">
+                      {number}
+                    </span>
+                  </div>
+                  <div className="mt-5 flex items-center gap-2 text-xs font-bold text-[#75dfd2] uppercase">
+                    <Icon className="size-4" strokeWidth={1.8} />
+                    {label}
+                  </div>
+                  <h3 className="mt-3 text-xl font-bold">{title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-white/68">
+                    {description}
+                  </p>
+                  <p className="mt-4 border-l-2 border-[#e8a13d] pl-3 text-sm leading-6 text-white/88">
+                    {practiceNote}
+                  </p>
+                </article>
+              )
+            )}
+          </div>
+
+          <div className="mt-12 flex flex-col gap-6 border-y border-white/16 py-7 sm:mt-14 lg:flex-row lg:items-center lg:justify-between">
+            <p className="max-w-3xl text-sm leading-7 text-white/68">
+              Ready to capture it? Use the red Record control to request
+              microphone access and save a local MP4 on supported browsers.
+            </p>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-semibold">
+              <a
+                href="#play"
+                className="inline-flex min-h-11 items-center gap-2 text-[#e8a13d] hover:text-[#ffbd64]"
               >
-                <div className="flex items-center justify-between">
-                  <Icon className="size-6 text-[#b26026]" strokeWidth={1.8} />
-                  <span className="font-mono text-xs text-[#8a9a9c]">
-                    0{index + 1}
-                  </span>
-                </div>
-                <h3 className="mt-8 text-xl font-bold text-[#17292c]">
-                  {title}
-                </h3>
-                <p className="mt-3 max-w-sm text-sm leading-6 text-[#637477]">
-                  {description}
-                </p>
-              </article>
-            ))}
+                Try your first chord
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
+              <a
+                href="/how-it-works"
+                className="inline-flex min-h-11 items-center gap-2 text-[#75dfd2] hover:text-[#a9fff6]"
+              >
+                Read the full gesture guide
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="ways-to-play"
+        className="scroll-mt-8 bg-[#eaf1ef] py-20 sm:py-28"
+      >
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            <figure>
+              <img
+                src="/images/gesture-synth-hand-tracking.jpg"
+                alt="Two hands raised in front of a laptop with illustrated hand-tracking landmarks"
+                width={1200}
+                height={800}
+                loading="lazy"
+                decoding="async"
+                className="aspect-[3/2] w-full object-cover"
+              />
+              <figcaption className="mt-4 max-w-lg text-sm leading-6 text-[#536d70]">
+                The left hand chooses the harmony. The right hand changes the
+                chord&apos;s voicing, octave, volume, and filter.
+              </figcaption>
+            </figure>
+
+            <div>
+              <p className="text-xs font-bold text-[#137b75] uppercase">
+                Ways to play
+              </p>
+              <h2 className="mt-4 max-w-xl text-3xl font-bold text-[#102a2c] sm:text-4xl">
+                Use an online gesture synthesizer to turn a small movement into
+                a musical idea
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#496266]">
+                Gesture Synth is built for the moment before an idea becomes a
+                full track: explore a progression, shape its feel, then capture
+                a short take while it is still fresh.
+              </p>
+
+              <div className="mt-8 divide-y divide-[#b8ccca] border-y border-[#b8ccca]">
+                {PLAY_IDEAS.map(({ number, title, description }) => (
+                  <article
+                    key={title}
+                    className="grid gap-3 py-5 sm:grid-cols-[44px_1fr]"
+                  >
+                    <span className="font-mono text-xs text-[#b26026]">
+                      {number}
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-bold text-[#102a2c]">
+                        {title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-[#5a7073]">
+                        {description}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <a
+                href="/how-it-works"
+                className="mt-7 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#137b75] hover:text-[#0b5550]"
+              >
+                Read the full gesture guide
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-16 grid items-center gap-10 border-t border-[#b8ccca] pt-16 lg:mt-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20 lg:pt-24">
+            <div className="lg:order-2">
+              <p className="text-xs font-bold text-[#b26026] uppercase">
+                Capture a take
+              </p>
+              <h2 className="mt-4 max-w-xl text-3xl font-bold text-[#102a2c] sm:text-4xl">
+                Record the idea locally, then decide what happens next
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#496266]">
+                Recording starts only when you choose it and may ask for
+                microphone access. On supported browsers, Gesture Synth mixes
+                the live visual, your microphone, and the generated synth into a
+                local MP4 download. There is no built-in publishing step.
+              </p>
+              <a
+                href="/how-it-works"
+                className="mt-7 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#137b75] hover:text-[#0b5550]"
+              >
+                See recording details
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </a>
+            </div>
+
+            <figure className="lg:order-1">
+              <img
+                src="/images/gesture-synth-recording-idea.jpg"
+                alt="Music maker seated at a laptop in a home studio"
+                width={1200}
+                height={800}
+                loading="lazy"
+                decoding="async"
+                className="aspect-[3/2] w-full object-cover"
+              />
+              <figcaption className="mt-4 max-w-lg text-sm leading-6 text-[#536d70]">
+                Your recording stays under your control after the browser
+                downloads it.
+              </figcaption>
+            </figure>
           </div>
         </div>
       </section>
@@ -302,6 +505,32 @@ export function GestureSynthHome() {
               </a>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="bg-[#b26026] py-16 text-white sm:py-20">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold text-white/70 uppercase">
+              Ready when you are
+            </p>
+            <h2 className="mt-4 text-3xl font-bold sm:text-4xl">
+              Put your hands in frame and make the first chord.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-white/80">
+              No account is required. Camera access begins only after you start
+              the instrument.
+            </p>
+          </div>
+
+          <a
+            href="#play"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center gap-3 rounded-md bg-[#102a2c] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#071d1f]"
+          >
+            <CirclePlay className="size-5" aria-hidden="true" />
+            Play Gesture Synth
+            <ArrowUpRight className="size-4" aria-hidden="true" />
+          </a>
         </div>
       </section>
     </>

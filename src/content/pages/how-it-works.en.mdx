@@ -1,50 +1,65 @@
 export const meta = {
-  title: 'How Gesture Synth Works',
+  title: 'How to Play Gesture Synth',
   description:
-    'Learn how Gesture Synth turns two-hand movements into chords, tone, recording, and local browser-based music.',
+    'A practical guide to playing Gesture Synth with two hands, recording a local MP4, and sharing your downloaded take.',
   updated_at: '2026-08-05',
 };
 
-## An online gesture synthesizer for music lovers
+## A browser instrument for music lovers
 
-Gesture Synth is a free online gesture synthesizer that turns two-hand movements into musical control. It is designed for music lovers who want to play chords, shape tone, and record a short performance without installing software or creating an account.
+Gesture Synth is made by Cian, an independent creator, for music lovers who want to explore harmony through movement. It turns two hands into a simple chord instrument: the left hand chooses the harmony, while the right hand changes its shape and sound.
 
-The instrument runs in a modern browser. Your camera provides the hand movement needed for playing, while the browser creates the synth sound locally with Web Audio.
+Think of it as a place to sketch a progression, find a texture, or capture a brief performance idea. You do not need to know formal music theory to begin, but the Roman numerals and chord labels on screen make the musical choices visible as you play.
 
-## Start, allow the camera, then play
+## Get started with one simple chord
 
-1. Open the instrument and select **Start playing**.
-2. Allow camera access when your browser asks for it.
-3. Keep both hands visible to play and shape the sound.
+1. Select **Start playing**, then allow camera access when the browser asks.
+2. Once the instrument is running, choose a key and synth sound from the controls in the upper-left corner of the stage.
+3. Stand or sit where both hands can stay in the camera frame. Clear lighting and a plain background can make the hand positions easier to see.
+4. Make a left-hand gesture to choose a chord, then add the right hand to voice and shape it.
 
-Gesture Synth asks for camera access only after you start the instrument. You can stop camera access by closing the page, revoking browser permission, or disabling the camera on your device.
+For a first sound, show one finger with your left hand and tilt it inward for a major I chord. On the right hand, extend one non-thumb finger for root position, then raise or lower that hand to change volume. Watch the chord label and quality readout as you settle into each pose.
 
-## What your hands control
+Gesture Synth asks for camera access after you select **Start playing**. You can stop access by closing the page, revoking browser permission, or disabling the camera on your device.
 
-Your left hand selects the scale degree and major or minor mode. Your right hand controls chord voicing, octave, volume, and filter. Keeping both hands in view gives the instrument the information it needs to turn movement into stable musical states.
+## Left hand: choose the harmony
 
-This is a performance tool, not a replacement for a physical keyboard or a complete DAW. It is built for quick exploration: make a chord, change its character with movement, and capture a short take when an idea appears.
+Your left hand selects the scale degree and whether the chord is major or minor.
 
-## Browser and device requirements
+- One through five extended fingers select I through V.
+- Extend index and pinky, with the middle and ring fingers folded, for VI.
+- Add the thumb to that index-and-pinky shape for VII.
+- Tilt the left hand inward for major and outward for minor.
 
-For the best chance of a smooth session, use a current or previous major release of Chrome, Edge, or Safari on a device with a working camera. Firefox support is best effort. Browser support for camera access, Web Audio, canvas capture, hardware acceleration, and MP4 recording can vary by browser and device.
+If you are new to harmony, try I, IV, and V first. In a selected key, those three degrees are a useful place to make a familiar progression. Change the left-hand tilt after you know the shape to hear the difference between major and minor.
 
-Ordinary playing needs camera permission. Recording additionally asks for microphone permission only when you choose to begin an MP4 recording. If your browser or device does not support one of those media features, the related part of the instrument may be unavailable.
+## Right hand: voice and shape the sound
 
-## What happens to camera and recording data
+Your right hand changes the chord voicing, octave, filter, and volume. Its finger count uses the four non-thumb fingers:
 
-Camera frames, hand landmarks, microphone audio, generated synth audio, and recordings are processed in your browser. Gesture Synth does not provide cloud media storage or upload performance recordings. When you record, the browser combines the live synth canvas with microphone and generated synth audio, then downloads the result as an MP4 on supported browsers. A recording stops automatically after five minutes.
+- One extended finger: root position.
+- Two extended fingers: first inversion.
+- Three extended fingers: a seventh chord.
+- Four extended fingers: dominant seventh in major mode or diminished seventh in minor mode.
 
-Read the [Privacy Policy](/privacy-policy) for the full explanation of local processing, anonymous product events, and what is not collected.
+Use the right thumb position to move between octaves: thumb in for a higher octave and thumb out for a lower octave. Tilt the right hand inward for more filter and outward for less. Raise it for a louder sound or lower it for a softer sound.
 
-## Technology behind the instrument
+Try changing one element at a time. For example, keep a left-hand I major chord steady while moving from one to three right-hand fingers, then change the hand height. This makes it easier to connect a physical movement with the sound and the on-screen readout.
 
-Gesture Synth uses [MediaPipe Hand Landmarker for the web](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/web_js) to detect hand landmarks on the device. Sound is generated with the browser's [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API). Camera permission follows the browser's [getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) model, and recording relies on browser media capabilities such as [MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder).
+The on-stage **Gesture guide** button repeats these mappings while you play.
 
-These references describe the underlying browser and hand-tracking technologies. They do not guarantee that every browser, camera, microphone, or device will behave identically with Gesture Synth.
+## Make a short performance
 
-## Make and share a short performance
+Once the synth is running, select the circular record control. Recording asks for microphone permission and combines the live performance display with microphone and generated synth audio. Select the stop control when you are finished; a recording also stops after five minutes.
 
-Start with both hands clearly framed, use the left hand to choose harmony, then use the right hand to change the chord's voicing, octave, volume, and filter. When you are ready to capture an idea, start recording and grant microphone access only if you want microphone audio mixed into the take. The downloaded MP4 remains under your control; make sure you have the rights to publish anything you record.
+When recording is available, the browser downloads the resulting MP4 locally. Download locally, then share wherever you choose. Before publishing a take, make sure you have the rights to any voices, sounds, or other material captured by your microphone.
 
-For help with a browser, camera, or recording issue, email [a3011336204@gmail.com](mailto:a3011336204@gmail.com).
+## Tested browser boundary
+
+Gesture Synth has been tested in Google Chrome. That is the browser testing result this guide can state.
+
+It does not promise operation on a particular Chrome version, device, operating system, camera, microphone, extension setup, or any other browser. Camera access, hand tracking, audio, canvas capture, and MP4 recording depend on the browser and device in front of you. If a feature is unavailable, use the message shown in the instrument to diagnose the next step.
+
+## Need help?
+
+For help with a camera, hand-control, or recording issue, email [a3011336204@gmail.com](mailto:a3011336204@gmail.com). Include the browser, device, operating system, and the exact message you saw, but do not send personal recordings or camera footage unless it is necessary and you are comfortable sharing it.
