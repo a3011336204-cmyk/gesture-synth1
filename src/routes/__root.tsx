@@ -8,6 +8,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
@@ -15,6 +16,7 @@ import { envConfigs } from '@/config';
 import { getQueryClient } from '@/lib/query-client';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
+import { getGoogleAnalyticsTagConfig } from '@/components/analytics/google-analytics';
 import { Plausible } from '@/components/analytics/plausible';
 import { SandboxPreviewBridge } from '@/components/sandbox-preview-bridge';
 import { Toaster } from '@/components/ui/sonner';
@@ -25,27 +27,54 @@ import '@fontsource/libre-baskerville/700.css';
 import '@fontsource/libre-baskerville/400-italic.css';
 import '@/styles/globals.css';
 
+// Read the merged env + database config on the server so the GA tags are
+// present in the initial HTML and the admin setting can override the default.
+const getAnalyticsConfig = createServerFn().handler(async () => {
+  const { getAllConfigs } = await import('@/modules/config/service');
+  const configs = await getAllConfigs();
+  return { googleAnalyticsId: configs.google_analytics_id?.trim() || '' };
+});
+
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1, viewport-fit=cover',
-      },
-      { title: envConfigs.app_name },
-      { name: 'description', content: envConfigs.app_description },
-      { name: 'google', content: 'notranslate' },
-    ],
-    links: [
-      {
-        rel: 'icon',
-        href: '/images/gesture-synth-logo.png',
-        type: 'image/png',
-      },
-      { rel: 'apple-touch-icon', href: '/images/gesture-synth-logo.png' },
-    ],
-  }),
+  loader: () => getAnalyticsConfig(),
+  head: ({ loaderData }) => {
+    const googleAnalyticsTags = getGoogleAnalyticsTagConfig(
+      loaderData?.googleAnalyticsId || ''
+    );
+    return {
+      meta: [
+        { charSet: 'utf-8' },
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+        },
+        { title: envConfigs.app_name },
+        { name: 'description', content: envConfigs.app_description },
+        { name: 'google', content: 'notranslate' },
+      ],
+      links: [
+        {
+          rel: 'icon',
+          href: '/images/gesture-synth-logo.png',
+          type: 'image/png',
+        },
+        { rel: 'apple-touch-icon', href: '/images/gesture-synth-logo.png' },
+      ],
+      scripts: googleAnalyticsTags
+        ? [
+            {
+              id: 'ga-loader',
+              src: googleAnalyticsTags.loaderSrc,
+              async: true,
+            },
+            {
+              id: 'ga-init',
+              children: googleAnalyticsTags.initScript,
+            },
+          ]
+        : [],
+    };
+  },
   component: RootComponent,
   shellComponent: RootDocument,
   notFoundComponent: NotFound,

@@ -3,15 +3,32 @@
 // + delays script load until hydration). `async` keeps it off the critical
 // path; GA's enhanced measurement picks up History API navigations on its
 // own in App Router.
+export function getGoogleAnalyticsTagConfig(measurementId: string) {
+  const normalizedMeasurementId = measurementId.trim();
+  if (!normalizedMeasurementId) return null;
+  if (!/^G-[A-Z0-9]+$/.test(normalizedMeasurementId)) {
+    throw new Error(
+      `Invalid Google Analytics Measurement ID: "${measurementId}"`
+    );
+  }
+
+  const serializedMeasurementId = JSON.stringify(
+    normalizedMeasurementId
+  ).replace(/</g, '\\u003c');
+
+  return {
+    loaderSrc: `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(normalizedMeasurementId)}`,
+    initScript: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${serializedMeasurementId});`,
+  };
+}
+
 export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
-  if (!measurementId) return null;
+  const tagConfig = getGoogleAnalyticsTagConfig(measurementId);
+  if (!tagConfig) return null;
+
   return (
     <>
-      <script
-        id="ga-loader"
-        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
-        async
-      />
+      <script id="ga-loader" src={tagConfig.loaderSrc} async />
       {/* async={true} flags this to React 19 as a hoistable resource —
           without it, React logs the "Encountered a script tag while
           rendering React component" warning and won't re-execute it on
@@ -20,7 +37,7 @@ export function GoogleAnalytics({ measurementId }: { measurementId: string }) {
         id="ga-init"
         async
         dangerouslySetInnerHTML={{
-          __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${measurementId}');`,
+          __html: tagConfig.initScript,
         }}
       />
     </>

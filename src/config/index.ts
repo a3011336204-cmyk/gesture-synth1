@@ -14,6 +14,7 @@ const procEnv: Record<string, string | undefined> =
 const publicEnv = (key: string) => metaEnv[key] ?? procEnv[key];
 
 export const CANONICAL_SITE_URL = 'https://www.gesturesynth.co';
+const DEFAULT_GOOGLE_ANALYTICS_ID = 'G-MQLN7DCHQ6';
 
 export const envConfigs: Record<string, string> = {
   // App (public)
@@ -22,6 +23,7 @@ export const envConfigs: Record<string, string> = {
   app_description:
     publicEnv('VITE_APP_DESCRIPTION') ??
     'Gesture Synth is a free online gesture synthesizer. Play music with both hands, shape chords and tone, and record performances locally in your browser.',
+  google_analytics_id: DEFAULT_GOOGLE_ANALYTICS_ID,
   plausible_domain: publicEnv('VITE_PLAUSIBLE_DOMAIN') ?? '',
   plausible_src: publicEnv('VITE_PLAUSIBLE_SRC') ?? '',
 
