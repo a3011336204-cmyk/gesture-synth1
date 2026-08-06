@@ -2,19 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm build",
   "framework": null,
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "^gesture-synth-five\\.vercel\\.app$"
-        }
-      ],
-      "destination": "https://www.gesturesynth.co/:path*",
-      "permanent": true
-    }
-  ],
   "headers": [
     {
       "source": "/models/hand_landmarker-0.10.35.task",

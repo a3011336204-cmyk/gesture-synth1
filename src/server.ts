@@ -1,5 +1,6 @@
 import handler from '@tanstack/react-start/server-entry';
 
+import { CANONICAL_SITE_URL } from './config';
 import { getCookieFromHeader } from './lib/cookie';
 import { paraglideMiddleware } from './paraglide/server.js';
 
@@ -39,6 +40,22 @@ const NOINDEX_ROUTE_PREFIXES = [
   '/auth-callback',
   '/redeem-invite',
 ] as const;
+
+const LEGACY_SITE_HOSTNAME = 'gesture-synth-five.vercel.app';
+
+export function getCanonicalSiteRedirect(request: Request): Response | null {
+  const requestUrl = new URL(request.url);
+  if (requestUrl.hostname !== LEGACY_SITE_HOSTNAME) return null;
+
+  const redirectUrl = new URL(CANONICAL_SITE_URL);
+  redirectUrl.pathname = requestUrl.pathname;
+  redirectUrl.search = requestUrl.search;
+
+  return new Response(null, {
+    status: 308,
+    headers: { Location: redirectUrl.href },
+  });
+}
 
 function isNoindexRoute(pathname: string): boolean {
   // Paraglide may prefix a localized URL (for example, /zh/settings). Keep
@@ -89,6 +106,12 @@ function ensureCloudflareEnv(): Promise<void> {
 // getLocale() resolves per-request (AsyncLocalStorage) during SSR.
 export default {
   async fetch(req: Request): Promise<Response> {
+    const canonicalSiteRedirect = getCanonicalSiteRedirect(req);
+    if (canonicalSiteRedirect) {
+      setSecurityHeaders(canonicalSiteRedirect, req);
+      return canonicalSiteRedirect;
+    }
+
     await ensureCloudflareEnv();
     const response = await paraglideMiddleware(req, () => handler.fetch(req));
     setSecurityHeaders(response, req);
