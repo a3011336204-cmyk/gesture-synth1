@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { DataTable, type Column } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 
 type Order = {
   id: string;
@@ -137,18 +136,25 @@ function PaymentsPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">{m['settings.payments.title']()}</h1>
-        <p className="text-muted-foreground">
-          {m['settings.payments.description']()}
-        </p>
+    <div className="studio-page">
+      <div className="studio-page-header">
+        <div>
+          <h1 className="studio-page-title">
+            {m['settings.payments.title']()}
+          </h1>
+          <p className="studio-page-description">
+            {m['settings.payments.description']()}
+          </p>
+        </div>
       </div>
 
-      <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div className="studio-page-tabs">
         {TABS.map((tb) => (
           <button
             key={tb}
+            type="button"
+            aria-pressed={tab === tb}
+            data-active={tab === tb}
             onClick={() => setTab(tb)}
             className={cn(
               '-mb-px border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
@@ -162,24 +168,20 @@ function PaymentsPage() {
         ))}
       </div>
 
-      <Card>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={orders}
-            total={total}
-            page={page}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
-            rowKey={(o) => o.id}
-            emptyText={m['settings.payments.no_payments']()}
-            search={search}
-            onSearchChange={setSearch}
-            onRefresh={() => query.refetch()}
-            loading={query.isFetching}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={orders}
+        total={total}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        rowKey={(o) => o.id}
+        emptyText={m['settings.payments.no_payments']()}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={() => query.refetch()}
+        loading={query.isFetching}
+      />
     </div>
   );
 }

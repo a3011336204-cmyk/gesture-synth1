@@ -271,7 +271,12 @@ function UsersPage() {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button variant="ghost" size="icon" className="size-7">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={m['admin.users.actions_col']()}
+              >
                 <MoreHorizontal className="size-4" />
               </Button>
             }
@@ -292,16 +297,18 @@ function UsersPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">{m['admin.users.title']()}</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-7 bg-[#f4efe5] p-5 text-[#26352d] sm:p-6">
+      <div className="border-b border-[#b99f80] pb-5">
+        <h1 className="font-serif text-3xl leading-tight font-normal text-[#1d2a24]">
+          {m['admin.users.title']()}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#615c51]">
           {m['admin.users.description']()}
         </p>
       </div>
 
-      <Card>
-        <CardContent>
+      <Card className="rounded-[8px] border-[#c6b299] bg-[#fffaf1] shadow-[0_8px_20px_rgba(57,48,36,0.08)]">
+        <CardContent className="p-4 sm:p-5">
           <DataTable
             columns={columns}
             data={listQuery.data?.items ?? []}
@@ -335,9 +342,11 @@ function UsersPage() {
             {allRoles.map((r) => (
               <label
                 key={r.id}
+                htmlFor={`admin-user-role-${r.id}`}
                 className="flex cursor-pointer items-center gap-3"
               >
                 <Checkbox
+                  id={`admin-user-role-${r.id}`}
                   checked={userRoleIds.has(r.id)}
                   onCheckedChange={() => toggleRole(r.id)}
                   disabled={toggling}
@@ -393,6 +402,7 @@ function UsersPage() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
+                  aria-pressed={creditsAction === 'grant'}
                   onClick={() => setCreditsAction('grant')}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                     creditsAction === 'grant'
@@ -404,6 +414,7 @@ function UsersPage() {
                 </button>
                 <button
                   type="button"
+                  aria-pressed={creditsAction === 'deduct'}
                   onClick={() => setCreditsAction('deduct')}
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                     creditsAction === 'deduct'
@@ -416,10 +427,14 @@ function UsersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">
+                <label
+                  htmlFor="admin-credits-amount"
+                  className="text-sm font-medium"
+                >
                   {m['admin.users.credits_amount_label']()}
                 </label>
                 <Input
+                  id="admin-credits-amount"
                   type="number"
                   min="1"
                   value={creditsAmount}
@@ -429,10 +444,14 @@ function UsersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">
+                <label
+                  htmlFor="admin-credits-description"
+                  className="text-sm font-medium"
+                >
                   {m['admin.users.credits_desc_label']()}
                 </label>
                 <Input
+                  id="admin-credits-description"
                   value={creditsDesc}
                   onChange={(e) => setCreditsDesc(e.target.value)}
                   placeholder={m['admin.users.credits_desc_placeholder']()}

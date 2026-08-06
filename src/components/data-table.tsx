@@ -101,17 +101,20 @@ export function DataTable<T>({
   return (
     <div className="space-y-4">
       {showHeader && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {onSearchChange && (
-            <div className="relative max-w-sm">
-              <Search className="text-muted-foreground absolute top-2.5 left-2.5 size-4" />
+            <div className="relative min-w-0 flex-1 sm:max-w-sm">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#786b5b] dark:text-[#c8c1b5]" />
               <Input
                 value={search || ''}
                 onChange={(e) => onSearchChange(e.target.value)}
+                aria-label={
+                  searchPlaceholder || m['common.search.placeholder']()
+                }
                 placeholder={
                   searchPlaceholder || m['common.search.placeholder']()
                 }
-                className="h-9 pl-8"
+                className="h-9 rounded-[6px] border-[#c6b299] bg-[#fffaf1] pl-9 text-[#26352d] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] placeholder:text-[#827564] hover:border-[#a99176] focus-visible:border-[#b95c33] focus-visible:ring-[#b95c33]/25 disabled:bg-[#eee4d7] dark:border-[#46534b] dark:bg-[#202b25] dark:text-[#f4eee4] dark:placeholder:text-[#a9a59a] dark:hover:border-[#617168] dark:focus-visible:border-[#d87850] dark:focus-visible:ring-[#d87850]/25 dark:disabled:bg-[#26322c]"
               />
             </div>
           )}
@@ -120,7 +123,7 @@ export function DataTable<T>({
             <Button
               variant="outline"
               size="icon"
-              className="ml-auto size-9"
+              className="ml-auto size-9 rounded-[6px] border-[#c6b299] bg-[#f8f2e9] text-[#5e493b] shadow-[0_1px_2px_rgba(57,48,36,0.08)] hover:-translate-y-px hover:border-[#a99176] hover:bg-[#e7dcc9] hover:text-[#26352d] focus-visible:border-[#b95c33] focus-visible:ring-[#b95c33]/25 active:translate-y-0 disabled:bg-[#eee4d7] disabled:text-[#9a8d7c] dark:border-[#46534b] dark:bg-[#26322c] dark:text-[#d6cbbd] dark:hover:border-[#617168] dark:hover:bg-[#33433a] dark:hover:text-[#fff7eb] dark:focus-visible:border-[#d87850] dark:focus-visible:ring-[#d87850]/25 dark:disabled:bg-[#202b25] dark:disabled:text-[#787d75]"
               onClick={handleRefresh}
               disabled={busy}
               aria-label={m['common.table.refresh']()}
@@ -131,18 +134,22 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
+      <div className="overflow-hidden rounded-[6px] border border-[#c6b299] bg-[#fffaf1] shadow-[0_2px_7px_rgba(57,48,36,0.07)] dark:border-[#46534b] dark:bg-[#202b25] dark:shadow-[0_2px_8px_rgba(0,0,0,0.16)]">
+        <Table className="min-w-full text-[#26352d] dark:text-[#f4eee4]">
+          <TableHeader className="bg-[#e9ddca] dark:bg-[#2b3831]">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                key={headerGroup.id}
+                className="border-[#c6b299] hover:bg-[#e9ddca] dark:border-[#46534b] dark:hover:bg-[#2b3831]"
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={
+                    className={cn(
+                      'h-10 px-4 text-xs font-semibold text-[#5e493b] dark:text-[#d6cbbd]',
                       (header.column.columnDef.meta as { className?: string })
                         ?.className
-                    }
+                    )}
                   >
                     {flexRender(
                       header.column.columnDef.header,
@@ -155,24 +162,28 @@ export function DataTable<T>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
-              <TableRow>
+              <TableRow className="border-[#c6b299] hover:bg-transparent dark:border-[#46534b]">
                 <TableCell
                   colSpan={columns.length}
-                  className="text-muted-foreground py-8 text-center"
+                  className="py-9 text-center text-sm text-[#786b5b] dark:text-[#c8c1b5]"
                 >
                   {emptyText || m['common.table.no_data']()}
                 </TableCell>
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="border-[#d8cab6] text-[#26352d] hover:bg-[#f4ecdf] dark:border-[#3d4942] dark:text-[#f4eee4] dark:hover:bg-[#29362f]"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={
+                      className={cn(
+                        'px-4 py-3',
                         (cell.column.columnDef.meta as { className?: string })
                           ?.className
-                      }
+                      )}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -187,8 +198,8 @@ export function DataTable<T>({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between px-2">
-        <p className="text-muted-foreground text-sm">
+      <div className="flex flex-col gap-3 border-t border-[#c6b299] px-1 pt-3 sm:flex-row sm:items-center sm:justify-between dark:border-[#46534b]">
+        <p className="text-xs font-medium text-[#786b5b] dark:text-[#c8c1b5]">
           {m['common.table.total']({ count: total })}
         </p>
         {total > pageSize && (
@@ -196,6 +207,7 @@ export function DataTable<T>({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-[6px] border-[#c6b299] bg-[#f8f2e9] text-[#5e493b] hover:border-[#a99176] hover:bg-[#e7dcc9] hover:text-[#26352d] focus-visible:border-[#b95c33] focus-visible:ring-[#b95c33]/25 disabled:bg-[#eee4d7] disabled:text-[#9a8d7c] dark:border-[#46534b] dark:bg-[#26322c] dark:text-[#d6cbbd] dark:hover:border-[#617168] dark:hover:bg-[#33433a] dark:hover:text-[#fff7eb] dark:focus-visible:border-[#d87850] dark:focus-visible:ring-[#d87850]/25 dark:disabled:bg-[#202b25] dark:disabled:text-[#787d75]"
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
             >
@@ -205,6 +217,7 @@ export function DataTable<T>({
             <Button
               variant="outline"
               size="sm"
+              className="rounded-[6px] border-[#c6b299] bg-[#f8f2e9] text-[#5e493b] hover:border-[#a99176] hover:bg-[#e7dcc9] hover:text-[#26352d] focus-visible:border-[#b95c33] focus-visible:ring-[#b95c33]/25 disabled:bg-[#eee4d7] disabled:text-[#9a8d7c] dark:border-[#46534b] dark:bg-[#26322c] dark:text-[#d6cbbd] dark:hover:border-[#617168] dark:hover:bg-[#33433a] dark:hover:text-[#fff7eb] dark:focus-visible:border-[#d87850] dark:focus-visible:ring-[#d87850]/25 dark:disabled:bg-[#202b25] dark:disabled:text-[#787d75]"
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
             >

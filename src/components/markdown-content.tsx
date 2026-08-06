@@ -44,22 +44,22 @@ md.renderer.rules.link_open = function (tokens, idx, options, _env, renderer) {
 // Shared typography for rendered markdown — also used by the admin rich-text
 // editor so what you edit matches what the public pages render.
 export const markdownStyles = cn(
-  'text-[15px] leading-7 text-foreground/90',
-  '[&_h1]:mt-6 [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h1]:tracking-tight [&_h1]:text-foreground md:[&_h1]:text-2xl',
-  '[&_h2]:mt-6 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground md:[&_h2]:text-xl',
-  '[&_h3]:mt-4 [&_h3]:mb-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:text-foreground',
+  'text-[15px] leading-7 text-[#393b32] dark:text-[#e7dcc9]',
+  '[&_h1]:mt-8 [&_h1]:mb-3 [&_h1]:font-serif [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-[#26352d] dark:[&_h1]:text-[#f4eee4] md:[&_h1]:text-3xl',
+  '[&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:border-l [&_h2]:border-[#b95c33] [&_h2]:pl-3 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-[#26352d] dark:[&_h2]:text-[#f4eee4] md:[&_h2]:text-2xl',
+  '[&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:font-serif [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-[#26352d] dark:[&_h3]:text-[#f4eee4]',
   '[&_p]:mt-2 [&_p]:leading-7',
-  '[&_a]:font-medium [&_a]:text-primary [&_a]:underline-offset-4 hover:[&_a]:underline',
-  '[&_ul]:mt-2 [&_ul]:ml-6 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:marker:text-muted-foreground',
-  '[&_ol]:mt-2 [&_ol]:ml-6 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:marker:text-muted-foreground',
+  '[&_a]:font-medium [&_a]:text-[#8d4327] [&_a]:underline-offset-4 hover:[&_a]:text-[#6e321e] hover:[&_a]:underline',
+  '[&_ul]:mt-2 [&_ul]:ml-6 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:marker:text-[#b95c33]',
+  '[&_ol]:mt-2 [&_ol]:ml-6 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:marker:text-[#b95c33]',
   '[&_li]:leading-7',
-  '[&_strong]:font-semibold [&_strong]:text-foreground',
-  '[&_blockquote]:my-4 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground',
-  '[&_code]:rounded [&_code]:bg-muted [&_code]:px-[0.4rem] [&_code]:py-[0.2rem] [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground',
-  '[&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-border [&_pre]:bg-muted [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0',
-  '[&_hr]:my-8 [&_hr]:border-border',
-  '[&_img]:my-4 [&_img]:rounded-xl',
-  '[&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2'
+  '[&_strong]:font-semibold [&_strong]:text-[#26352d] dark:[&_strong]:text-[#f4eee4]',
+  '[&_blockquote]:my-5 [&_blockquote]:border-l [&_blockquote]:border-[#b95c33] [&_blockquote]:pl-4 [&_blockquote]:font-serif [&_blockquote]:italic [&_blockquote]:text-[#615c51] dark:[&_blockquote]:text-[#c8c1b5]',
+  '[&_code]:rounded-none [&_code]:bg-[#e7dcc9] [&_code]:px-[0.4rem] [&_code]:py-[0.2rem] [&_code]:font-mono [&_code]:text-sm [&_code]:text-[#523e2e] dark:[&_code]:bg-[#33433a] dark:[&_code]:text-[#e7dcc9]',
+  '[&_pre]:my-5 [&_pre]:overflow-x-auto [&_pre]:rounded-[4px] [&_pre]:border [&_pre]:border-[#c6b299] [&_pre]:bg-[#e7dcc9] [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0',
+  '[&_hr]:my-8 [&_hr]:border-[#cdb895]',
+  '[&_img]:my-4 [&_img]:border [&_img]:border-[#c6b299]',
+  '[&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-[#c6b299] [&_th]:bg-[#e7dcc9] [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_td]:border [&_td]:border-[#c6b299] [&_td]:px-3 [&_td]:py-2'
 );
 
 export function MarkdownContent({

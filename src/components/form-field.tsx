@@ -51,8 +51,17 @@ export function TextField({
         required={required}
         disabled={disabled}
         aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${field.name}-error` : undefined}
       />
-      {error && <p className="text-destructive text-sm">{error}</p>}
+      {error && (
+        <p
+          id={`${field.name}-error`}
+          role="alert"
+          className="text-destructive text-sm"
+        >
+          {error}
+        </p>
+      )}
     </Field>
   );
 }

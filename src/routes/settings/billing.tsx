@@ -6,17 +6,16 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Eye, MoreHorizontal, Pencil, XCircle } from 'lucide-react';
+import { Eye, MoreHorizontal, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { tDynamic } from '@/core/i18n/dynamic';
-import { Link } from '@/core/i18n/navigation';
 import { ApiError, apiGet, apiPost, type PageResult } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { DataTable, type Column } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -231,7 +230,12 @@ function BillingPage() {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button variant="ghost" size="icon" className="size-7">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={m['settings.billing.actions_col']()}
+              >
                 <MoreHorizontal className="size-4" />
               </Button>
             }
@@ -255,30 +259,20 @@ function BillingPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">{m['settings.billing.title']()}</h1>
-        <p className="text-muted-foreground">
-          {m['settings.billing.description']()}
-        </p>
+    <div className="studio-page">
+      <div className="studio-page-header">
+        <div>
+          <h1 className="studio-page-title">{m['settings.billing.title']()}</h1>
+          <p className="studio-page-description">
+            {m['settings.billing.description']()}
+          </p>
+        </div>
       </div>
 
       <Card className="max-w-md">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{m['settings.billing.subscription']()}</CardTitle>
-            <Link
-              href="/pricing"
-              className={cn(
-                buttonVariants({ variant: 'outline', size: 'sm' }),
-                'gap-2'
-              )}
-            >
-              <Pencil className="size-4" />
-              {current
-                ? m['settings.billing.adjust']()
-                : m['settings.billing.subscribe']()}
-            </Link>
           </div>
         </CardHeader>
         <CardContent>
@@ -324,10 +318,13 @@ function BillingPage() {
         </CardContent>
       </Card>
 
-      <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div className="studio-page-tabs">
         {TABS.map((tb) => (
           <button
             key={tb}
+            type="button"
+            aria-pressed={tab === tb}
+            data-active={tab === tb}
             onClick={() => setTab(tb)}
             className={cn(
               '-mb-px border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
@@ -341,27 +338,23 @@ function BillingPage() {
         ))}
       </div>
 
-      <Card>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={rows}
-            total={total}
-            page={page}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
-            rowKey={(r) => r.id}
-            emptyText={m['settings.billing.no_subscription']()}
-            search={search}
-            onSearchChange={setSearch}
-            onRefresh={async () => {
-              currentQuery.refetch();
-              await listQuery.refetch();
-            }}
-            loading={listQuery.isFetching}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={rows}
+        total={total}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        rowKey={(r) => r.id}
+        emptyText={m['settings.billing.no_subscription']()}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={async () => {
+          currentQuery.refetch();
+          await listQuery.refetch();
+        }}
+        loading={listQuery.isFetching}
+      />
 
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
         <DialogContent>

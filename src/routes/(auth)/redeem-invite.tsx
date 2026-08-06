@@ -4,10 +4,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { signOut, useSession } from '@/core/auth/client';
 import { useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { apiGet, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Field,
   FieldDescription,
@@ -16,6 +17,16 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
+import {
+  musicRoomAuthCardClass,
+  musicRoomAuthCardContentClass,
+  musicRoomAuthCardHeaderClass,
+  musicRoomAuthErrorClass,
+  musicRoomAuthLinkClass,
+  musicRoomAuthPrimaryButtonClass,
+  MusicRoomAuthShell,
+} from './-music-room-auth-shell';
+
 function RedeemInvitePage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
@@ -23,6 +34,8 @@ function RedeemInvitePage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [checkingError, setCheckingError] = useState(false);
+  const [checkAttempt, setCheckAttempt] = useState(0);
 
   // Must be signed in; if no invite is actually needed, leave.
   useEffect(() => {
@@ -32,21 +45,26 @@ function RedeemInvitePage() {
       return;
     }
     let cancelled = false;
-    fetch('/api/user/info')
-      .then((r) => r.json())
+    setChecking(true);
+    setCheckingError(false);
+    apiGet<{ needsInvite?: boolean }>('/api/user/info')
       .then((res) => {
         if (cancelled) return;
-        if (res.code === 0 && !res.data?.needsInvite) {
+        if (!res.needsInvite) {
           router.push('/settings');
         } else {
           setChecking(false);
         }
       })
-      .catch(() => !cancelled && setChecking(false));
+      .catch(() => {
+        if (cancelled) return;
+        setChecking(false);
+        setCheckingError(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [isPending, session, router]);
+  }, [checkAttempt, isPending, session, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,32 +76,17 @@ function RedeemInvitePage() {
     }
     setLoading(true);
     try {
-      const validate = await fetch('/api/invite-codes/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: trimmed }),
-      }).then((r) => r.json());
-      if (validate.code !== 0) {
-        setError(validate.message || m['common.sign.invite_code_invalid']());
-        setLoading(false);
-        return;
-      }
-
-      const redeem = await fetch('/api/invite-codes/redeem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: trimmed }),
-      }).then((r) => r.json());
-      if (redeem.code !== 0) {
-        setError(redeem.message || m['common.sign.invite_code_invalid']());
-        setLoading(false);
-        return;
-      }
+      await apiPost('/api/invite-codes/validate', { code: trimmed });
+      await apiPost('/api/invite-codes/redeem', { code: trimmed });
 
       // Hard navigation so the new plan/membership is reflected everywhere.
       window.location.assign(localizeHref('/settings'));
-    } catch (err: any) {
-      setError(err?.message || m['common.sign.invite_code_invalid']());
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : m['common.sign.invite_code_invalid']()
+      );
       setLoading(false);
     }
   }
@@ -95,67 +98,107 @@ function RedeemInvitePage() {
 
   if (isPending || checking) {
     return (
-      <div className="bg-muted flex min-h-svh items-center justify-center">
-        <div className="border-primary size-6 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
+      <MusicRoomAuthShell appName={envConfigs.app_name}>
+        <Card className={musicRoomAuthCardClass}>
+          <CardContent className={musicRoomAuthCardContentClass}>
+            <div className="flex min-h-28 items-center justify-center">
+              <div className="size-6 animate-spin rounded-full border-2 border-[#9a4f2e] border-t-transparent" />
+            </div>
+          </CardContent>
+        </Card>
+      </MusicRoomAuthShell>
+    );
+  }
+
+  if (checkingError) {
+    return (
+      <MusicRoomAuthShell appName={envConfigs.app_name}>
+        <Card className={musicRoomAuthCardClass}>
+          <CardContent className={musicRoomAuthCardContentClass}>
+            <div
+              className="flex flex-col items-center gap-4 py-5 text-center"
+              role="alert"
+            >
+              <p className="font-serif text-xl text-[#1d2a24]">
+                {m['common.error.title']()}
+              </p>
+              <p className="text-sm leading-6 text-[#665f52]">
+                {m['common.error.message']()}
+              </p>
+              <Button
+                type="button"
+                className={musicRoomAuthPrimaryButtonClass}
+                onClick={() => setCheckAttempt((attempt) => attempt + 1)}
+              >
+                {m['common.error.retry']()}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </MusicRoomAuthShell>
     );
   }
 
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <span className="self-center font-serif text-lg italic">
-          {envConfigs.app_name}
-        </span>
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl">
-              {m['common.sign.redeem_title']()}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <FieldGroup>
-                {error && (
-                  <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm">
-                    {error}
-                  </div>
-                )}
-                <p className="text-muted-foreground text-sm">
-                  {m['common.sign.redeem_description']()}
-                </p>
-                <Field>
-                  <FieldLabel htmlFor="invite-code">
-                    {m['common.sign.invite_code_title']()}
-                  </FieldLabel>
-                  <Input
-                    id="invite-code"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    placeholder={m['common.sign.invite_code_placeholder']()}
-                    required
-                  />
-                </Field>
-                <Field>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? '...' : m['common.sign.redeem_submit']()}
-                  </Button>
-                  <FieldDescription className="text-center">
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="underline underline-offset-4"
-                    >
-                      {m['common.sign.sign_out_title']()}
-                    </button>
-                  </FieldDescription>
-                </Field>
-              </FieldGroup>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <MusicRoomAuthShell appName={envConfigs.app_name}>
+      <Card className={musicRoomAuthCardClass}>
+        <CardHeader className={musicRoomAuthCardHeaderClass}>
+          <h1 className="font-serif text-[1.75rem] leading-[1.1] font-normal text-[#1d2a24]">
+            {m['common.sign.redeem_title']()}
+          </h1>
+        </CardHeader>
+        <CardContent className={musicRoomAuthCardContentClass}>
+          <form onSubmit={handleSubmit}>
+            <FieldGroup>
+              {error && (
+                <div
+                  id="redeem-invite-error"
+                  role="alert"
+                  className={musicRoomAuthErrorClass}
+                >
+                  {error}
+                </div>
+              )}
+              <p className="text-sm leading-6 text-[#665f52]">
+                {m['common.sign.redeem_description']()}
+              </p>
+              <Field>
+                <FieldLabel htmlFor="invite-code">
+                  {m['common.sign.invite_code_title']()}
+                </FieldLabel>
+                <Input
+                  id="invite-code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder={m['common.sign.invite_code_placeholder']()}
+                  required
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? 'redeem-invite-error' : undefined}
+                />
+              </Field>
+              <Field>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className={musicRoomAuthPrimaryButtonClass}
+                >
+                  {loading ? '...' : m['common.sign.redeem_submit']()}
+                </Button>
+                <FieldDescription className="text-center text-[#665f52]">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className={musicRoomAuthLinkClass}
+                  >
+                    {m['common.sign.sign_out_title']()}
+                  </button>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </MusicRoomAuthShell>
   );
 }
 

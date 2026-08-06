@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronDown, FlaskConical, Minus, Plus, Save } from 'lucide-react';
@@ -148,32 +148,76 @@ function AdminSettingsPage() {
   const tabGroups = groups.filter((g) => g.tab === activeTab);
   const tabSettings = settings.filter((s) => s.tab === activeTab);
 
+  function selectTabWithKeyboard(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentTab: string
+  ) {
+    const currentIndex = tabs.findIndex((tab) => tab.name === currentTab);
+    let nextIndex = currentIndex;
+
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % tabs.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = tabs.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTab = tabs[nextIndex];
+    if (!nextTab) return;
+    setActiveTab(nextTab.name);
+    document.getElementById(`admin-settings-tab-${nextTab.name}`)?.focus();
+  }
+
   return (
-    <div className="space-y-6 p-6 md:max-w-3xl">
-      <div className="flex items-center justify-between">
+    <div className="space-y-7 bg-[#f4efe5] p-5 text-[#26352d] sm:p-6 md:max-w-3xl">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#b99f80] pb-5">
         <div>
-          <h1 className="text-2xl font-bold">{m['admin.settings.title']()}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-serif text-3xl leading-tight font-normal text-[#1d2a24]">
+            {m['admin.settings.title']()}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#615c51]">
             {m['admin.settings.description']()}
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="gap-2 rounded-[6px] bg-[#b95c33] text-[#fff7eb] shadow-[0_3px_10px_rgba(57,48,36,0.14)] hover:bg-[#9d4928] focus-visible:ring-[#b95c33]/35"
+        >
           <Save className="size-4" />
           {saving ? m['admin.settings.saving']() : m['admin.settings.save']()}
         </Button>
       </div>
 
       {/* Tabs */}
-      <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div
+        role="tablist"
+        aria-orientation="horizontal"
+        aria-label={m['admin.settings.title']()}
+        className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-[#b99f80]"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.name}
+            type="button"
+            id={`admin-settings-tab-${tab.name}`}
+            role="tab"
+            aria-selected={activeTab === tab.name}
+            aria-controls="admin-settings-panel"
+            tabIndex={activeTab === tab.name ? 0 : -1}
             onClick={() => setActiveTab(tab.name)}
+            onKeyDown={(event) => selectTabWithKeyboard(event, tab.name)}
             className={cn(
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+              '-mb-px border-b px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
               activeTab === tab.name
-                ? 'border-primary text-foreground'
-                : 'text-muted-foreground hover:text-foreground border-transparent'
+                ? 'border-[#b95c33] text-[#1d2a24]'
+                : 'border-transparent text-[#615c51] hover:text-[#8c4529]'
             )}
           >
             {tDynamic(`admin.settings.tabs.${tab.name}`)}
@@ -182,101 +226,123 @@ function AdminSettingsPage() {
       </div>
 
       {/* Groups */}
-      {isLoading ? (
-        <div className="text-muted-foreground">{m['admin.loading']()}</div>
-      ) : activeTab === 'custom' ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{m['admin.settings.custom.title']()}</CardTitle>
-            <p className="text-muted-foreground text-sm">
-              {m['admin.settings.custom.description']()}
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {customRows.length === 0 && (
+      <div
+        id="admin-settings-panel"
+        role="tabpanel"
+        tabIndex={0}
+        aria-labelledby={`admin-settings-tab-${activeTab}`}
+      >
+        {isLoading ? (
+          <div className="text-muted-foreground">{m['admin.loading']()}</div>
+        ) : activeTab === 'custom' ? (
+          <Card className="rounded-[8px] border-[#c6b299] bg-[#fffaf1] shadow-[0_8px_20px_rgba(57,48,36,0.08)]">
+            <CardHeader>
+              <CardTitle>{m['admin.settings.custom.title']()}</CardTitle>
               <p className="text-muted-foreground text-sm">
-                {m['admin.settings.custom.empty']()}
+                {m['admin.settings.custom.description']()}
               </p>
-            )}
-            {customRows.map((row, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <Input
-                  value={row.key}
-                  onChange={(e) => updateCustomRow(i, 'key', e.target.value)}
-                  placeholder={m['admin.settings.custom.key_placeholder']()}
-                  className="w-1/3 shrink-0 font-mono"
-                />
-                <textarea
-                  value={row.value}
-                  onChange={(e) => updateCustomRow(i, 'value', e.target.value)}
-                  placeholder={m['admin.settings.custom.value_placeholder']()}
-                  rows={1}
-                  className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex h-8 max-h-48 min-h-8 flex-1 resize-y rounded-lg border bg-transparent px-2.5 py-1 text-base leading-6 transition-colors outline-none focus-visible:ring-3 md:text-sm"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => removeCustomRow(i)}
-                  aria-label={m['admin.settings.custom.remove']()}
-                >
-                  <Minus className="size-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              onClick={addCustomRow}
-              className="gap-1.5"
-            >
-              <Plus className="size-4" />
-              {m['admin.settings.custom.add']()}
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        tabGroups.map((group) => {
-          const groupSettings = tabSettings.filter(
-            (s) => s.group === group.name
-          );
-          if (groupSettings.length === 0) return null;
-
-          const testSpec = getTestSpec(group.name);
-          return (
-            <Card key={group.name}>
-              <CardHeader
-                className="cursor-pointer select-none"
-                onClick={() => toggleCollapse(group.name)}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {customRows.length === 0 && (
+                <p className="text-muted-foreground text-sm">
+                  {m['admin.settings.custom.empty']()}
+                </p>
+              )}
+              {customRows.map((row, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <Input
+                    value={row.key}
+                    onChange={(e) => updateCustomRow(i, 'key', e.target.value)}
+                    placeholder={m['admin.settings.custom.key_placeholder']()}
+                    aria-label={m['admin.settings.custom.key_placeholder']()}
+                    className="w-1/3 shrink-0 font-mono"
+                  />
+                  <textarea
+                    value={row.value}
+                    onChange={(e) =>
+                      updateCustomRow(i, 'value', e.target.value)
+                    }
+                    placeholder={m['admin.settings.custom.value_placeholder']()}
+                    aria-label={m['admin.settings.custom.value_placeholder']()}
+                    rows={1}
+                    className="border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex h-8 max-h-48 min-h-8 flex-1 resize-y rounded-lg border bg-transparent px-2.5 py-1 text-base leading-6 transition-colors outline-none focus-visible:ring-3 md:text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => removeCustomRow(i)}
+                    aria-label={m['admin.settings.custom.remove']()}
+                  >
+                    <Minus className="size-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addCustomRow}
+                className="gap-1.5"
               >
-                <div className="flex items-center justify-between">
-                  <CardTitle>
-                    {tDynamic(`admin.settings.groups.${group.name}.title`)}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
+                <Plus className="size-4" />
+                {m['admin.settings.custom.add']()}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          tabGroups.map((group) => {
+            const groupSettings = tabSettings.filter(
+              (s) => s.group === group.name
+            );
+            if (groupSettings.length === 0) return null;
+
+            const testSpec = getTestSpec(group.name);
+            const groupPanelId = `admin-settings-group-${group.name}`;
+            const groupCollapsed = collapsed.has(group.name);
+            return (
+              <Card
+                key={group.name}
+                className="rounded-[8px] border-[#c6b299] bg-[#fffaf1] shadow-[0_8px_20px_rgba(57,48,36,0.08)]"
+              >
+                <CardHeader className="select-none">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-md text-left focus-visible:ring-2 focus-visible:ring-[#b95c33]/35 focus-visible:outline-none"
+                      aria-expanded={!groupCollapsed}
+                      aria-controls={groupPanelId}
+                      onClick={() => toggleCollapse(group.name)}
+                    >
+                      <span className="text-base leading-snug font-medium">
+                        {tDynamic(`admin.settings.groups.${group.name}.title`)}
+                      </span>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className={`text-muted-foreground size-5 shrink-0 transition-transform ${
+                          groupCollapsed ? '-rotate-90' : ''
+                        }`}
+                      />
+                    </button>
                     {testSpec && (
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         className="gap-1.5"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTestingGroup(group.name);
-                        }}
+                        onClick={() => setTestingGroup(group.name)}
                       >
                         <FlaskConical className="size-3.5" />
                         {m['admin.settings.test.button']()}
                       </Button>
                     )}
-                    <ChevronDown
-                      className={`text-muted-foreground size-5 transition-transform ${
-                        collapsed.has(group.name) ? '-rotate-90' : ''
-                      }`}
-                    />
                   </div>
-                </div>
-              </CardHeader>
-              {!collapsed.has(group.name) && (
-                <CardContent className="space-y-4">
+                </CardHeader>
+                <CardContent
+                  id={groupPanelId}
+                  hidden={groupCollapsed}
+                  className="space-y-4"
+                >
                   {groupSettings.map((setting) => (
                     <SettingField
                       key={setting.name}
@@ -292,11 +358,11 @@ function AdminSettingsPage() {
                     />
                   ))}
                 </CardContent>
-              )}
-            </Card>
-          );
-        })
-      )}
+              </Card>
+            );
+          })
+        )}
+      </div>
 
       {testingGroup && getTestSpec(testingGroup) && (
         <SettingsTestDialog
@@ -351,7 +417,7 @@ function SettingField({
       <div className="space-y-2">
         <Label htmlFor={setting.name}>{label}</Label>
         <Select value={value} onValueChange={(v) => onChange(v || '')}>
-          <SelectTrigger>
+          <SelectTrigger id={setting.name}>
             <SelectValue placeholder={placeholder || 'Select...'} />
           </SelectTrigger>
           <SelectContent>

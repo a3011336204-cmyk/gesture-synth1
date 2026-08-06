@@ -5,12 +5,16 @@ import { getAuth } from '@/core/auth';
 import { db } from '@/core/db';
 import { credit } from '@/config/db/schema';
 import { respErr, respPage } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 async function GET({ request }: { request: Request }) {
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return respErr('Unauthorized');
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
+    }
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));

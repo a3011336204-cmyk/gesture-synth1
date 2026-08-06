@@ -21,12 +21,12 @@ export function BuiltWithShipAny({ className }: { className?: string }) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        'inline-flex items-center gap-2 rounded-full border border-neutral-700 bg-neutral-900 px-3.5 py-1.5 text-sm font-medium text-neutral-100 transition-colors hover:border-neutral-500 hover:bg-neutral-800',
+        'inline-flex items-center gap-2 rounded-[4px] border border-[#526057] bg-[#26352d] px-3.5 py-1.5 text-sm font-medium text-[#e7dcc9] transition-colors hover:border-[#9b6a42] hover:bg-[#33433a] hover:text-[#f4efe5]',
         className
       )}
     >
       <span>Built with</span>
-      <Heart aria-hidden className="size-3.5 fill-red-500 text-red-500" />
+      <Heart aria-hidden className="size-3.5 fill-[#b95c33] text-[#b95c33]" />
       <span>ShipAny</span>
     </a>
   );

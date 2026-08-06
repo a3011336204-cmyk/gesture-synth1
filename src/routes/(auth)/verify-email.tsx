@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { authClient, useSession } from '@/core/auth/client';
-import { Link, useRouter } from '@/core/i18n/navigation';
+import { useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { m } from '@/paraglide/messages.js';
 import { deLocalizeHref, localizeHref } from '@/paraglide/runtime.js';
@@ -15,8 +15,18 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
+
+import {
+  musicRoomAuthCardClass,
+  musicRoomAuthCardContentClass,
+  musicRoomAuthCardFooterClass,
+  musicRoomAuthCardHeaderClass,
+  musicRoomAuthGhostButtonClass,
+  musicRoomAuthOutlineButtonClass,
+  musicRoomAuthPrimaryButtonClass,
+  MusicRoomAuthShell,
+} from './-music-room-auth-shell';
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
@@ -229,72 +239,67 @@ function VerifyEmailPage() {
   };
 
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="self-center font-serif text-lg italic">
-          {envConfigs.app_name}
-        </Link>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg md:text-xl">
-              {m['common.sign.verify_email_page_title']()}
-            </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              {m['common.sign.verify_email_page_description']()}
-              {email ? ` ${email}` : ''}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={loading || cooldownSeconds > 0}
-                onClick={handleResend}
-              >
-                {loading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : cooldownSeconds > 0 ? (
-                  m['common.sign.resend_verification_countdown']({
-                    seconds: cooldownSeconds,
-                  })
-                ) : (
-                  m['common.sign.resend_verification']()
-                )}
-              </Button>
+    <MusicRoomAuthShell appName={envConfigs.app_name}>
+      <Card className={musicRoomAuthCardClass}>
+        <CardHeader className={musicRoomAuthCardHeaderClass}>
+          <h1 className="font-serif text-[1.75rem] leading-[1.1] font-normal text-[#1d2a24]">
+            {m['common.sign.verify_email_page_title']()}
+          </h1>
+          <CardDescription className="mt-2 leading-6 text-[#665f52]">
+            {m['common.sign.verify_email_page_description']()}
+            {email ? ` ${email}` : ''}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className={musicRoomAuthCardContentClass}>
+          <div className="grid gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className={musicRoomAuthOutlineButtonClass}
+              disabled={loading || cooldownSeconds > 0}
+              onClick={handleResend}
+            >
+              {loading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : cooldownSeconds > 0 ? (
+                m['common.sign.resend_verification_countdown']({
+                  seconds: cooldownSeconds,
+                })
+              ) : (
+                m['common.sign.resend_verification']()
+              )}
+            </Button>
 
-              <Button
-                type="button"
-                className="w-full"
-                disabled={isPending}
-                onClick={handleContinue}
-              >
-                {isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  m['common.sign.verify_email_continue']()
-                )}
-              </Button>
+            <Button
+              type="button"
+              className={musicRoomAuthPrimaryButtonClass}
+              disabled={isPending}
+              onClick={handleContinue}
+            >
+              {isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                m['common.sign.verify_email_continue']()
+              )}
+            </Button>
 
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                onClick={() => router.push(signInPath)}
-              >
-                {m['common.sign.back_to_sign_in']()}
-              </Button>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <p className="text-muted-foreground w-full text-center text-xs">
-              {m['common.sign.verify_email_tip']()}
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
-    </div>
+            <Button
+              type="button"
+              variant="ghost"
+              className={musicRoomAuthGhostButtonClass}
+              onClick={() => router.push(signInPath)}
+            >
+              {m['common.sign.back_to_sign_in']()}
+            </Button>
+          </div>
+        </CardContent>
+        <CardFooter className={musicRoomAuthCardFooterClass}>
+          <p className="w-full text-center text-xs leading-5 text-[#665f52]">
+            {m['common.sign.verify_email_tip']()}
+          </p>
+        </CardFooter>
+      </Card>
+    </MusicRoomAuthShell>
   );
 }
 

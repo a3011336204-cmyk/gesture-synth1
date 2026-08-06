@@ -206,6 +206,10 @@ function createDeferred<Value>() {
 }
 
 async function findEnabledRecordButton() {
+  const startButton = await screen.findByRole('button', {
+    name: 'Start playing',
+  });
+  fireEvent.click(startButton);
   const recordButton = await screen.findByRole('button', {
     name: 'Start MP4 performance recording',
   });
@@ -280,7 +284,7 @@ beforeEach(() => {
 });
 
 describe('GestureSynthStage lifecycle', () => {
-  it('requests the camera automatically and waits for permission before loading tracking', async () => {
+  it('requests the camera automatically and waits for play before loading tracking', async () => {
     const cameraPermission = createDeferred<MediaStream>();
     requestUserMedia.mockReturnValue(cameraPermission.promise);
     render(<GestureSynthStage />);
@@ -307,6 +311,17 @@ describe('GestureSynthStage lifecycle', () => {
     });
 
     await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Start playing' })
+      ).toBeVisible()
+    );
+    expect(mediaPipeMocks.forVisionTasks).not.toHaveBeenCalled();
+    expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
+    expect(audioContextInstances).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start playing' }));
+
+    await waitFor(() =>
       expect(mediaPipeMocks.createFromOptions).toHaveBeenCalledTimes(1)
     );
     expect(mediaPipeMocks.forVisionTasks).toHaveBeenCalledWith(
@@ -320,10 +335,6 @@ describe('GestureSynthStage lifecycle', () => {
         }),
       })
     );
-    expect(audioContextInstances).toHaveLength(0);
-    expect(
-      await screen.findByRole('button', { name: 'Start playing' })
-    ).toBeVisible();
   });
 
   it('creates AudioContext only after the centered Start playing control is selected', async () => {
@@ -336,7 +347,8 @@ describe('GestureSynthStage lifecycle', () => {
     expect(soundButton.parentElement).toHaveClass(
       'absolute',
       'inset-0',
-      'place-items-center'
+      'items-center',
+      'justify-center'
     );
     expect(audioContextInstances).toHaveLength(0);
 
@@ -348,10 +360,12 @@ describe('GestureSynthStage lifecycle', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows an actionable camera-denied error without loading tracking or audio', async () => {
-    requestUserMedia.mockRejectedValue(
-      new DOMException('Permission denied by test', 'NotAllowedError')
-    );
+  it('retries camera and unlocks audio from the centered denied-state control', async () => {
+    requestUserMedia
+      .mockRejectedValueOnce(
+        new DOMException('Permission denied by test', 'NotAllowedError')
+      )
+      .mockResolvedValueOnce(cameraStream());
     render(<GestureSynthStage />);
 
     expect(await screen.findByText('Camera access is blocked')).toBeVisible();
@@ -359,10 +373,30 @@ describe('GestureSynthStage lifecycle', () => {
       'href',
       '/camera-permission-help'
     );
-    expect(screen.getByRole('button', { name: 'Try camera' })).toBeEnabled();
+    const startPlayingButton = screen.getByRole('button', {
+      name: 'Try camera and start playing',
+    });
+    expect(startPlayingButton).toBeEnabled();
+    expect(startPlayingButton.parentElement).toHaveClass(
+      'absolute',
+      'inset-0',
+      'items-center',
+      'justify-end'
+    );
     expect(mediaPipeMocks.forVisionTasks).not.toHaveBeenCalled();
     expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
     expect(audioContextInstances).toHaveLength(0);
+
+    fireEvent.click(startPlayingButton);
+
+    await waitFor(() => expect(requestUserMedia).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(audioContextInstances).toHaveLength(1));
+    await waitFor(() =>
+      expect(mediaPipeMocks.createFromOptions).toHaveBeenCalledTimes(1)
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Try camera and start playing' })
+    ).not.toBeInTheDocument();
   });
 
   it('keeps camera help out of tracking-model failures', async () => {
@@ -372,12 +406,17 @@ describe('GestureSynthStage lifecycle', () => {
     );
     render(<GestureSynthStage />);
 
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Start playing' })
+    );
+
     expect(
       await screen.findByText('Hand tracking could not load')
     ).toBeVisible();
     expect(
       screen.queryByRole('link', { name: 'Camera help' })
     ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Restart synth' })).toBeEnabled();
   });
 
   it('stops camera, frame callbacks, audio, and tracking on unmount', async () => {
@@ -425,10 +464,14 @@ describe('GestureSynthStage lifecycle', () => {
     );
 
     await waitFor(() => expect(requestUserMedia).toHaveBeenCalledTimes(1));
+    expect(mediaPipeMocks.createFromOptions).not.toHaveBeenCalled();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Start playing' })
+    );
     await waitFor(() =>
       expect(mediaPipeMocks.createFromOptions).toHaveBeenCalledTimes(1)
     );
-    expect(audioContextInstances).toHaveLength(0);
+    expect(audioContextInstances).toHaveLength(1);
   });
 
   it('automatically stops and downloads recording at five minutes', async () => {

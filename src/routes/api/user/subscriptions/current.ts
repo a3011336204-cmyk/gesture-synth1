@@ -3,12 +3,16 @@ import { createFileRoute } from '@tanstack/react-router';
 import { getAuth } from '@/core/auth';
 import { getCurrentSubscription } from '@/modules/subscriptions/service';
 import { respData, respErr } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 async function GET({ request }: { request: Request }) {
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return respErr('Unauthorized');
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
+    }
 
     const sub = await getCurrentSubscription(session.user.id);
     return respData(sub || null);

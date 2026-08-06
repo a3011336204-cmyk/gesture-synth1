@@ -24,7 +24,7 @@ export function BlogCard({
   return (
     <Link
       href={href}
-      className="group border-border bg-card hover:border-foreground/20 relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:shadow-sm"
+      className="group relative flex flex-col overflow-hidden rounded-[4px] border border-[#c6b299] bg-[#fbf7ef] transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-[#9b6a42] hover:shadow-[0_10px_24px_rgba(71,48,31,0.12)]"
     >
       {image && (
         <img
@@ -33,19 +33,19 @@ export function BlogCard({
           width={640}
           height={360}
           loading="lazy"
-          className="aspect-video w-full object-cover object-center"
+          className="aspect-video w-full border-b border-[#c6b299] object-cover object-center"
         />
       )}
-      <div className="flex flex-1 flex-col gap-3 p-6">
-        <h3 className="leading-snug font-medium group-hover:underline group-hover:underline-offset-4">
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <h3 className="font-serif leading-snug font-bold text-[#26352d] group-hover:text-[#8d4327]">
           {title}
         </h3>
         {description && (
-          <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
+          <p className="line-clamp-3 text-sm leading-relaxed text-[#615c51]">
             {description}
           </p>
         )}
-        <div className="text-muted-foreground mt-auto flex items-center gap-2 pt-2 text-xs">
+        <div className="mt-auto flex items-center gap-2 border-t border-[#e0d4c3] pt-3 text-xs text-[#796850]">
           {date && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="size-3.5" />
@@ -62,7 +62,7 @@ export function BlogCard({
                   width={20}
                   height={20}
                   loading="lazy"
-                  className="size-5 rounded-full object-cover"
+                  className="size-5 rounded-sm border border-[#c6b299] object-cover"
                 />
               )}
               {authorName}

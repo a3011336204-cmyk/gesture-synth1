@@ -165,6 +165,7 @@ function InviteCodesPage() {
             size="icon"
             className="size-6"
             onClick={() => copyCode(r.code)}
+            aria-label={`Copy ${m['admin.invite_codes.code_col']()}: ${r.code}`}
           >
             <Copy className="size-3" />
           </Button>
@@ -216,6 +217,7 @@ function InviteCodesPage() {
           size="icon"
           className="size-7"
           onClick={() => setDeletingId(r.id)}
+          aria-label={m['admin.invite_codes.delete_title']()}
         >
           <Trash2 className="text-destructive size-4" />
         </Button>
@@ -224,32 +226,41 @@ function InviteCodesPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="space-y-7 bg-[#f4efe5] p-5 text-[#26352d] sm:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#b99f80] pb-5">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="font-serif text-3xl leading-tight font-normal text-[#1d2a24]">
             {m['admin.invite_codes.title']()}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#615c51]">
             {m['admin.invite_codes.description']()}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
+        <Button
+          onClick={() => setCreateOpen(true)}
+          className="gap-2 rounded-[6px] bg-[#b95c33] text-[#fff7eb] shadow-[0_3px_10px_rgba(57,48,36,0.14)] hover:bg-[#9d4928] focus-visible:ring-[#b95c33]/35"
+        >
           <Plus className="size-4" />
           {m['admin.invite_codes.create_button']()}
         </Button>
       </div>
 
-      <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div
+        role="group"
+        aria-label={m['admin.invite_codes.title']()}
+        className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-[#b99f80]"
+      >
         {TABS.map((tb) => (
           <button
             key={tb}
+            type="button"
+            aria-pressed={tab === tb}
             onClick={() => setTab(tb)}
             className={cn(
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+              '-mb-px border-b px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
               tab === tb
-                ? 'border-primary text-foreground'
-                : 'text-muted-foreground hover:text-foreground border-transparent'
+                ? 'border-[#b95c33] text-[#1d2a24]'
+                : 'border-transparent text-[#615c51] hover:text-[#8c4529]'
             )}
           >
             {tDynamic(`admin.invite_codes.tab_${tb}`)}
@@ -257,8 +268,8 @@ function InviteCodesPage() {
         ))}
       </div>
 
-      <Card>
-        <CardContent>
+      <Card className="rounded-[8px] border-[#c6b299] bg-[#fffaf1] shadow-[0_8px_20px_rgba(57,48,36,0.08)]">
+        <CardContent className="p-4 sm:p-5">
           <DataTable
             columns={columns}
             data={listQuery.data?.items ?? []}
@@ -303,8 +314,11 @@ function InviteCodesPage() {
                 <createForm.Field name="count">
                   {(field) => (
                     <div className="space-y-1.5">
-                      <Label>{m['admin.invite_codes.count_label']()}</Label>
+                      <Label htmlFor="invite-code-count">
+                        {m['admin.invite_codes.count_label']()}
+                      </Label>
                       <Input
+                        id="invite-code-count"
                         type="number"
                         min="1"
                         max="100"
@@ -318,8 +332,11 @@ function InviteCodesPage() {
                 <createForm.Field name="maxUses">
                   {(field) => (
                     <div className="space-y-1.5">
-                      <Label>{m['admin.invite_codes.max_uses_label']()}</Label>
+                      <Label htmlFor="invite-code-max-uses">
+                        {m['admin.invite_codes.max_uses_label']()}
+                      </Label>
                       <Input
+                        id="invite-code-max-uses"
                         type="number"
                         min="1"
                         value={String(field.state.value)}
@@ -333,8 +350,11 @@ function InviteCodesPage() {
               <createForm.Field name="trialDays">
                 {(field) => (
                   <div className="space-y-1.5">
-                    <Label>{m['admin.invite_codes.trial_days_label']()}</Label>
+                    <Label htmlFor="invite-code-trial-days">
+                      {m['admin.invite_codes.trial_days_label']()}
+                    </Label>
                     <Input
+                      id="invite-code-trial-days"
                       type="number"
                       min="1"
                       value={String(field.state.value)}
@@ -347,8 +367,11 @@ function InviteCodesPage() {
               <createForm.Field name="expiresAt">
                 {(field) => (
                   <div className="space-y-1.5">
-                    <Label>{m['admin.invite_codes.expires_label']()}</Label>
+                    <Label htmlFor="invite-code-expires-at">
+                      {m['admin.invite_codes.expires_label']()}
+                    </Label>
                     <Input
+                      id="invite-code-expires-at"
                       type="date"
                       value={String(field.state.value)}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -360,8 +383,11 @@ function InviteCodesPage() {
               <createForm.Field name="note">
                 {(field) => (
                   <div className="space-y-1.5">
-                    <Label>{m['admin.invite_codes.note_label']()}</Label>
+                    <Label htmlFor="invite-code-note">
+                      {m['admin.invite_codes.note_label']()}
+                    </Label>
                     <Input
+                      id="invite-code-note"
                       value={String(field.state.value)}
                       onChange={(e) => field.handleChange(e.target.value)}
                       onBlur={field.handleBlur}

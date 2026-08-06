@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Loader2 } from 'lucide-react';
 
 import { useSession } from '@/core/auth/client';
+import { envConfigs } from '@/config';
 import { apiGet } from '@/lib/api-client';
 import {
   isAllowedAppProtocolUrl,
@@ -12,6 +13,12 @@ import {
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
+
+import {
+  musicRoomAuthCardClass,
+  musicRoomAuthErrorClass,
+  MusicRoomAuthShell,
+} from './-music-room-auth-shell';
 
 /**
  * /auth-callback?redirect=<target>
@@ -81,18 +88,27 @@ function AuthCallbackPage() {
   }, [isPending, session?.user, configQuery.isSuccess, configQuery.data]);
 
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-3 p-6">
-      {error ? (
-        <p className="text-destructive text-sm">{error}</p>
-      ) : (
-        <>
-          <Loader2 className="text-muted-foreground size-5 animate-spin" />
-          <p className="text-muted-foreground text-sm">
-            {m['common.auth_callback.redirecting']()}
+    <MusicRoomAuthShell appName={envConfigs.app_name}>
+      <div
+        className={`${musicRoomAuthCardClass} flex min-h-44 flex-col items-center justify-center gap-4 px-6 py-8 text-center sm:px-8`}
+      >
+        {error ? (
+          <p role="alert" className={`${musicRoomAuthErrorClass} w-full`}>
+            {error}
           </p>
-        </>
-      )}
-    </div>
+        ) : (
+          <>
+            <Loader2
+              aria-hidden="true"
+              className="size-6 animate-spin text-[#9a4f2e]"
+            />
+            <p className="text-sm leading-6 text-[#665f52]">
+              {m['common.auth_callback.redirecting']()}
+            </p>
+          </>
+        )}
+      </div>
+    </MusicRoomAuthShell>
   );
 }
 

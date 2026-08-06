@@ -20,7 +20,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -74,6 +73,7 @@ function AttachmentGrid({ urls }: { urls: string[] }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`Open ${m['settings.tickets.attachments_label']()} ${i + 1}`}
         >
           <img
             src={url}
@@ -269,6 +269,7 @@ function TicketsPage() {
           size="icon"
           className="size-7"
           onClick={() => openDetail(r)}
+          aria-label={`Open ${m['settings.tickets.title_col']()}: ${r.title}`}
         >
           <MessageSquare className="size-4" />
         </Button>
@@ -277,13 +278,11 @@ function TicketsPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="studio-page">
+      <div className="studio-page-header">
         <div>
-          <h1 className="text-2xl font-bold">
-            {m['settings.tickets.title']()}
-          </h1>
-          <p className="text-muted-foreground">
+          <h1 className="studio-page-title">{m['settings.tickets.title']()}</h1>
+          <p className="studio-page-description">
             {m['settings.tickets.description']()}
           </p>
         </div>
@@ -293,24 +292,20 @@ function TicketsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={rows}
-            total={total}
-            page={page}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
-            rowKey={(r) => r.id}
-            emptyText={m['settings.tickets.empty']()}
-            search={search}
-            onSearchChange={setSearch}
-            onRefresh={() => listQuery.refetch()}
-            loading={listQuery.isFetching}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={rows}
+        total={total}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        rowKey={(r) => r.id}
+        emptyText={m['settings.tickets.empty']()}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={() => listQuery.refetch()}
+        loading={listQuery.isFetching}
+      />
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -353,8 +348,14 @@ function TicketsPage() {
                   placeholder={m['settings.tickets.content_placeholder']()}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label>{m['settings.tickets.attachments_label']()}</Label>
+              <div
+                role="group"
+                aria-labelledby="ticket-attachments-label"
+                className="space-y-1.5"
+              >
+                <Label id="ticket-attachments-label">
+                  {m['settings.tickets.attachments_label']()}
+                </Label>
                 <ImageUploader
                   key={uploaderKey}
                   allowMultiple
@@ -449,17 +450,23 @@ function TicketsPage() {
                 rows={3}
                 onChange={(e) => setReply(e.target.value)}
                 placeholder={m['settings.tickets.reply_placeholder']()}
+                aria-label={m['settings.tickets.reply_placeholder']()}
               />
-              <ImageUploader
-                key={replyUploaderKey}
-                allowMultiple
-                maxImages={9}
-                onChange={(items) => {
-                  const { urls, uploading: busy } = uploaderState(items);
-                  setReplyAttachments(urls);
-                  setReplyUploading(busy);
-                }}
-              />
+              <div
+                role="group"
+                aria-label={m['settings.tickets.attachments_label']()}
+              >
+                <ImageUploader
+                  key={replyUploaderKey}
+                  allowMultiple
+                  maxImages={9}
+                  onChange={(items) => {
+                    const { urls, uploading: busy } = uploaderState(items);
+                    setReplyAttachments(urls);
+                    setReplyUploading(busy);
+                  }}
+                />
+              </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={closeTicket}>
                   {m['settings.tickets.close_ticket']()}

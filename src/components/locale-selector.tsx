@@ -31,7 +31,7 @@ export function LocaleSelector({
           'inline-flex items-center transition-colors outline-none',
           variant === 'icon'
             ? 'text-muted-foreground hover:bg-accent hover:text-accent-foreground size-8 justify-center rounded-md'
-            : 'h-9 gap-2 rounded-full border px-4 text-sm',
+            : 'h-9 gap-2 rounded-[4px] border border-[#526057] px-4 text-sm',
           className
         )}
       >

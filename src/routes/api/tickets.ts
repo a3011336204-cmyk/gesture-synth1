@@ -9,6 +9,7 @@ import {
 } from '@/modules/tickets/service';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr, respPage } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 const VALID_STATUSES: TicketStatus[] = ['open', 'replied', 'closed'];
 
@@ -17,6 +18,9 @@ async function GET({ request }: { request: Request }) {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return respErr('Unauthorized');
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
+    }
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -45,6 +49,9 @@ async function POST({ request }: { request: Request }) {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return respErr('Unauthorized');
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
+    }
 
     // Prevent ticket spam: at most one creation per 30s per user
     const limited = enforceMinIntervalRateLimit(request, {

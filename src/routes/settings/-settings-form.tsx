@@ -51,9 +51,7 @@ export function SettingsForm({
     defaultValues: { name: initialName },
     validators: { onSubmit: profileSchema },
     onSubmit: async ({ value }) => {
-      await saveMutation
-        .mutateAsync({ name: value.name, image })
-        .catch(() => {});
+      await saveMutation.mutateAsync({ name: value.name, image });
     },
   });
 
@@ -70,13 +68,15 @@ export function SettingsForm({
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="space-y-6 p-6"
+      className="studio-page"
     >
-      <div>
-        <h1 className="text-2xl font-bold">{m['settings.profile.title']()}</h1>
-        <p className="text-muted-foreground">
-          {m['settings.profile.description']()}
-        </p>
+      <div className="studio-page-header">
+        <div>
+          <h1 className="studio-page-title">{m['settings.profile.title']()}</h1>
+          <p className="studio-page-description">
+            {m['settings.profile.description']()}
+          </p>
+        </div>
       </div>
 
       <Card>

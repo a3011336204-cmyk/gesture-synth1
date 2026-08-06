@@ -6,6 +6,7 @@ import { getAllConfigs } from '@/modules/config/service';
 import { createCheckout } from '@/modules/payment/service';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 function safeSameOriginPath(
   input: string | undefined | null,
@@ -36,6 +37,9 @@ async function POST({ request }: { request: Request }) {
 
     if (!session?.user) {
       return respErr('Unauthorized');
+    }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
     }
 
     const body = await request.json().catch(() => ({}));

@@ -6,6 +6,7 @@ import { db } from '@/core/db';
 import { envConfigs } from '@/config';
 import { user } from '@/config/db/schema';
 import { respData, respErr } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 async function PATCH({ request }: { request: Request }) {
   try {
@@ -14,6 +15,9 @@ async function PATCH({ request }: { request: Request }) {
 
     if (!session?.user) {
       return respErr('Unauthorized');
+    }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
     }
 
     const body = await request.json().catch(() => ({}));

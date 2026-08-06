@@ -19,7 +19,6 @@ import {
 import { m } from '@/paraglide/messages.js';
 import { DataTable, type Column } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -163,6 +162,7 @@ function ApiKeysPage() {
               size="icon"
               className="size-7"
               onClick={() => handleCopyKey(k.key!)}
+              aria-label={`Copy ${m['settings.apikeys.key_col']()}: ${k.title}`}
             >
               <Copy className="size-3" />
             </Button>
@@ -172,6 +172,7 @@ function ApiKeysPage() {
             size="icon"
             className="size-7"
             onClick={() => setKeyToDelete(k)}
+            aria-label={m['settings.apikeys.delete_title']()}
           >
             <Trash2 className="size-3" />
           </Button>
@@ -181,13 +182,11 @@ function ApiKeysPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="studio-page">
+      <div className="studio-page-header">
         <div>
-          <h1 className="text-2xl font-bold">
-            {m['settings.apikeys.title']()}
-          </h1>
-          <p className="text-muted-foreground">
+          <h1 className="studio-page-title">{m['settings.apikeys.title']()}</h1>
+          <p className="studio-page-description">
             {m['settings.apikeys.description']()}
           </p>
         </div>
@@ -256,6 +255,7 @@ function ApiKeysPage() {
             <Input
               readOnly
               value={createdKey}
+              aria-label={m['settings.apikeys.key_col']()}
               className="font-mono text-xs"
               onFocus={(e) => e.currentTarget.select()}
             />
@@ -264,6 +264,7 @@ function ApiKeysPage() {
               size="icon"
               className="shrink-0"
               onClick={handleCopyCreatedKey}
+              aria-label={`Copy ${m['settings.apikeys.key_col']()}`}
             >
               {copied ? (
                 <Check className="size-4" />
@@ -320,24 +321,20 @@ function ApiKeysPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={listQuery.data?.items ?? []}
-            total={listQuery.data?.total ?? 0}
-            page={page}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
-            rowKey={(k) => k.id}
-            emptyText={m['settings.apikeys.no_keys']()}
-            search={search}
-            onSearchChange={setSearch}
-            onRefresh={() => listQuery.refetch()}
-            loading={listQuery.isFetching}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={listQuery.data?.items ?? []}
+        total={listQuery.data?.total ?? 0}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        rowKey={(k) => k.id}
+        emptyText={m['settings.apikeys.no_keys']()}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={() => listQuery.refetch()}
+        loading={listQuery.isFetching}
+      />
     </div>
   );
 }

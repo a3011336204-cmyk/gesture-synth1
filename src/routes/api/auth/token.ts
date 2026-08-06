@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { getAuth } from '@/core/auth';
 import { respData, respErr } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 function parseCookies(header: string | null): Record<string, string> {
   const out: Record<string, string> = {};
@@ -29,6 +30,9 @@ async function GET({ request }: { request: Request }) {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
       return respErr('Unauthorized');
+    }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
     }
 
     const cookies = parseCookies(request.headers.get('cookie'));

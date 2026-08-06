@@ -189,6 +189,7 @@ function PermissionsPage() {
             size="icon"
             className="size-7"
             onClick={() => openEdit(p)}
+            aria-label={m['admin.permissions.edit_title']()}
           >
             <Pencil className="size-3" />
           </Button>
@@ -197,6 +198,7 @@ function PermissionsPage() {
             size="icon"
             className="size-7"
             onClick={() => setDeletingPerm(p)}
+            aria-label={m['admin.permissions.delete_title']()}
           >
             <Trash2 className="size-3" />
           </Button>
@@ -212,32 +214,44 @@ function PermissionsPage() {
     return (
       <div className="space-y-4 py-4">
         <div className="space-y-2">
-          <Label>{m['admin.permissions.code_field']()}</Label>
+          <Label htmlFor="permission-code">
+            {m['admin.permissions.code_field']()}
+          </Label>
           <Input
+            id="permission-code"
             value={values.code}
             onChange={(e) => onChange({ ...values, code: e.target.value })}
             placeholder={m['admin.permissions.code_placeholder']()}
           />
         </div>
         <div className="space-y-2">
-          <Label>{m['admin.permissions.resource_field']()}</Label>
+          <Label htmlFor="permission-resource">
+            {m['admin.permissions.resource_field']()}
+          </Label>
           <Input
+            id="permission-resource"
             value={values.resource}
             onChange={(e) => onChange({ ...values, resource: e.target.value })}
             placeholder={m['admin.permissions.resource_placeholder']()}
           />
         </div>
         <div className="space-y-2">
-          <Label>{m['admin.permissions.action_field']()}</Label>
+          <Label htmlFor="permission-action">
+            {m['admin.permissions.action_field']()}
+          </Label>
           <Input
+            id="permission-action"
             value={values.action}
             onChange={(e) => onChange({ ...values, action: e.target.value })}
             placeholder={m['admin.permissions.action_placeholder']()}
           />
         </div>
         <div className="space-y-2">
-          <Label>{m['admin.permissions.title_field']()}</Label>
+          <Label htmlFor="permission-title">
+            {m['admin.permissions.title_field']()}
+          </Label>
           <Input
+            id="permission-title"
             value={values.title}
             onChange={(e) => onChange({ ...values, title: e.target.value })}
             placeholder={m['admin.permissions.title_placeholder']()}
@@ -248,18 +262,18 @@ function PermissionsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-7 bg-[#f4efe5] p-5 text-[#26352d] sm:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#b99f80] pb-5">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="font-serif text-3xl leading-tight font-normal text-[#1d2a24]">
             {m['admin.permissions.title']()}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#615c51]">
             {m['admin.permissions.description']()}
           </p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors">
+          <DialogTrigger className="inline-flex h-10 items-center justify-center gap-2 rounded-[6px] bg-[#b95c33] px-3.5 text-sm font-semibold text-[#fff7eb] shadow-[0_3px_10px_rgba(57,48,36,0.14)] transition-colors hover:bg-[#9d4928] focus-visible:ring-2 focus-visible:ring-[#b95c33]/35 focus-visible:outline-none">
             <Plus className="size-4" />
             {m['admin.permissions.create_permission']()}
           </DialogTrigger>
@@ -295,8 +309,8 @@ function PermissionsPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent>
+      <Card className="rounded-[8px] border-[#c6b299] bg-[#fffaf1] shadow-[0_8px_20px_rgba(57,48,36,0.08)]">
+        <CardContent className="p-4 sm:p-5">
           <DataTable
             columns={columns}
             data={permissions}

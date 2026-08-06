@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import type {
   HandLandmarker,
   HandLandmarkerResult,
@@ -29,6 +24,14 @@ import {
 
 import { Link } from '@/core/i18n/navigation';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogClose,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 import {
   classifyScaleDegree,
@@ -424,10 +427,16 @@ export function GestureSynthStage() {
   const recordingTimeoutRef = useRef<number | null>(null);
   const recordingStartingRef = useRef(false);
   const recordingStoppingRef = useRef(false);
+  const trackingRequestedRef = useRef(false);
+  const trackingStartingRef = useRef(false);
+  const hashFocusDoneRef = useRef(false);
+  const gestureGuideTriggerRef = useRef<HTMLButtonElement>(null);
+  const gestureGuideCloseRef = useRef<HTMLButtonElement>(null);
 
   const [modelStatus, setModelStatus] = useState<ModelStatus>('idle');
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('idle');
   const [cameraReady, setCameraReady] = useState(false);
+  const [trackingRequested, setTrackingRequested] = useState(false);
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('locked');
   const [audioFailure, setAudioFailure] = useState<string | null>(null);
   const [stageError, setStageError] = useState<StageError | null>(null);
@@ -759,6 +768,47 @@ export function GestureSynthStage() {
     [releaseSession]
   );
 
+  const startTracking = useCallback(async () => {
+    if (trackingStartingRef.current || sessionActiveRef.current) return;
+
+    const engine = engineRef.current;
+    const video = videoRef.current;
+    if (!engine || !video?.srcObject) return;
+
+    trackingStartingRef.current = true;
+    setStageError(null);
+    setSessionStatus('starting');
+    const sessionVersion = sessionVersionRef.current;
+
+    try {
+      const model = await ensureHandLandmarker();
+      if (
+        !mountedRef.current ||
+        sessionVersion !== sessionVersionRef.current ||
+        engineRef.current !== engine
+      ) {
+        return;
+      }
+
+      sessionActiveRef.current = true;
+      setSessionStatus('running');
+      trackSynthEvent('synth_engine_ready', { delegate: model.delegate });
+      startFrameLoop(model.landmarker, engine);
+    } catch (cause) {
+      if (!mountedRef.current || sessionVersion !== sessionVersionRef.current) {
+        return;
+      }
+      const failure = modelError(cause);
+      console.error(`${failure.title}: ${failure.message}`);
+      trackSynthEvent('synth_error', { code: failure.code });
+      releaseSession();
+      setStageError(failure);
+      setSessionStatus('error');
+    } finally {
+      trackingStartingRef.current = false;
+    }
+  }, [ensureHandLandmarker, releaseSession, startFrameLoop]);
+
   const startSession = useCallback(
     async (source: 'automatic' | 'retry') => {
       if (sessionStartingRef.current || sessionActiveRef.current) return;
@@ -827,25 +877,10 @@ export function GestureSynthStage() {
           return;
         }
         setCameraReady(true);
-
-        let model: Awaited<ReturnType<typeof createHandLandmarker>>;
-        try {
-          model = await ensureHandLandmarker();
-        } catch (cause) {
-          throw modelError(cause);
+        setSessionStatus('idle');
+        if (trackingRequestedRef.current) {
+          void startTracking();
         }
-
-        if (
-          !mountedRef.current ||
-          sessionVersion !== sessionVersionRef.current
-        ) {
-          return;
-        }
-
-        sessionActiveRef.current = true;
-        setSessionStatus('running');
-        trackSynthEvent('synth_engine_ready', { delegate: model.delegate });
-        startFrameLoop(model.landmarker, engine);
       } catch (cause) {
         if (
           !mountedRef.current ||
@@ -876,7 +911,7 @@ export function GestureSynthStage() {
         }
       }
     },
-    [ensureHandLandmarker, releaseSession, startFrameLoop]
+    [releaseSession, startTracking]
   );
 
   const enableAudio = useCallback(async (): Promise<boolean> => {
@@ -1094,6 +1129,11 @@ export function GestureSynthStage() {
   }, [releaseSession, startSession]);
 
   useEffect(() => {
+    if (!trackingRequested || !cameraReady) return;
+    void startTracking();
+  }, [cameraReady, startTracking, trackingRequested]);
+
+  useEffect(() => {
     const container = canvasContainerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
@@ -1135,336 +1175,394 @@ export function GestureSynthStage() {
   }, [selectedKeyName]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.hash !== '#gesture-synth-stage') {
+      hashFocusDoneRef.current = false;
+      return;
+    }
+    if (hashFocusDoneRef.current) return;
+
+    const startButton = document.getElementById('gesture-synth-start');
+    if (startButton instanceof HTMLElement) {
+      startButton.focus({ preventScroll: true });
+      hashFocusDoneRef.current = true;
+    }
+  }, [audioStatus, cameraReady, sessionStatus, stageError]);
+
+  useEffect(() => {
     engineRef.current?.setWaveform(waveform);
   }, [waveform]);
-
-  const closeHelp = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.currentTarget === event.target) setHelpOpen(false);
-  };
 
   const volumeBarCount = Math.round(readout.volume * 8);
   const isTrackingActive = sessionStatus === 'running';
   const cameraStatusText = isTrackingActive
     ? 'Camera on · Processing locally'
-    : cameraReady && modelStatus === 'loading'
+    : cameraReady && trackingRequested && modelStatus === 'loading'
       ? 'Camera on · Loading hand tracking'
-      : cameraReady
+      : cameraReady && trackingRequested
         ? 'Camera on · Starting hand tracking'
-        : 'Waiting for camera permission';
-  const startPlayingLabel =
-    audioStatus === 'starting'
-      ? 'Starting sound'
-      : audioStatus === 'error'
-        ? 'Try sound again'
-        : 'Start playing';
+        : cameraReady
+          ? 'Camera on · Ready when you press play'
+          : 'Waiting for camera permission';
   const showCameraHelp =
     stageError?.code === 'camera_denied' ||
     stageError?.code === 'camera_missing' ||
     stageError?.code === 'camera_busy' ||
     stageError?.code === 'camera_unavailable';
+  const startPlayingLabel = showCameraHelp
+    ? audioStatus === 'starting'
+      ? 'Starting camera and sound'
+      : 'Try camera and start playing'
+    : audioStatus === 'starting'
+      ? 'Starting sound'
+      : audioStatus === 'error'
+        ? 'Try sound again'
+        : 'Start playing';
+  const startPlayingCaption = showCameraHelp
+    ? audioStatus === 'starting'
+      ? 'Starting camera and sound'
+      : 'Retry camera + sound'
+    : audioStatus === 'starting'
+      ? 'Starting sound'
+      : audioStatus === 'error'
+        ? 'Try sound again'
+        : 'Enable sound';
+  const startPlaying = useCallback(() => {
+    trackingRequestedRef.current = true;
+    setTrackingRequested(true);
+    if (showCameraHelp) {
+      // Start both requests inside the same user gesture while camera permission
+      // may still be pending, so browser audio policies are satisfied.
+      void startSession('retry');
+    }
+    void enableAudio();
+  }, [enableAudio, showCameraHelp, startSession]);
 
   return (
-    <div
-      ref={stageRef}
-      className={cn(
-        'gesture-synth-stage relative isolate overflow-hidden border border-white/15 bg-[#071725] text-white shadow-[0_28px_80px_rgba(2,12,22,0.35)]',
-        expanded
-          ? 'fixed inset-3 z-[100] h-auto rounded-md sm:inset-6'
-          : 'h-[clamp(430px,58vw,690px)] rounded-md',
-        fullscreenActive && 'h-screen rounded-none border-0'
-      )}
-    >
-      <div ref={canvasContainerRef} className="absolute inset-0">
-        <video
-          ref={videoRef}
-          className={cn(
-            'absolute inset-0 size-full scale-x-[-1] object-cover transition-opacity duration-300',
-            isTrackingActive ? 'opacity-0' : 'opacity-100'
-          )}
-          autoPlay
-          muted
-          playsInline
-        />
-        <canvas
-          ref={canvasRef}
-          data-testid="gesture-canvas"
-          className={cn(
-            'absolute inset-0 size-full transition-opacity duration-300',
-            isTrackingActive ? 'opacity-100' : 'opacity-0'
-          )}
-        />
-      </div>
-
-      <div className="absolute top-3 right-3 z-30 flex h-10 items-center rounded-md border border-white/10 bg-[#07111f]/90 p-1 backdrop-blur sm:top-4 sm:right-4">
-        <button
-          type="button"
-          onClick={() => setExpanded((value) => !value)}
-          className="grid size-8 place-items-center rounded text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-          aria-label={expanded ? 'Restore synth size' : 'Expand synth'}
-          title={expanded ? 'Restore size' : 'Expand'}
-        >
-          {expanded ? (
-            <Minimize2 className="size-4" />
-          ) : (
-            <Expand className="size-4" />
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={() => void toggleFullscreen()}
-          className="grid size-8 place-items-center rounded text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-          aria-label={fullscreenActive ? 'Exit fullscreen' : 'Open fullscreen'}
-          title={fullscreenActive ? 'Exit fullscreen' : 'Fullscreen'}
-        >
-          {fullscreenActive ? (
-            <Minimize2 className="size-4" />
-          ) : (
-            <Fullscreen className="size-4" />
-          )}
-        </button>
-      </div>
-
-      <div className="absolute top-3 left-3 z-20 flex w-[132px] flex-col gap-2 sm:top-4 sm:left-4 sm:w-[148px]">
-        <label className="sr-only" htmlFor="gesture-synth-key">
-          Musical key
-        </label>
-        <select
-          id="gesture-synth-key"
-          value={selectedKeyName}
-          onChange={(event) =>
-            setSelectedKeyName(event.target.value as KeyOption['name'])
-          }
-          className="h-8 rounded border border-[#3a3428] bg-[#151515]/95 px-2 font-mono text-xs text-[#e8a13d] outline-none focus:border-[#e8a13d] sm:text-sm"
-        >
-          {KEY_OPTIONS.map((keyOption) => (
-            <option key={keyOption.name} value={keyOption.name}>
-              Key: {keyOption.label}
-            </option>
-          ))}
-        </select>
-        <label className="sr-only" htmlFor="gesture-synth-waveform">
-          Synth waveform
-        </label>
-        <select
-          id="gesture-synth-waveform"
-          value={waveform}
-          onChange={(event) =>
-            setWaveform(event.target.value as OscillatorType)
-          }
-          className="h-8 rounded border border-[#3a3428] bg-[#151515]/95 px-2 font-mono text-xs text-[#e8a13d] outline-none focus:border-[#e8a13d] sm:text-sm"
-        >
-          {WAVEFORM_OPTIONS.map((waveformOption) => (
-            <option key={waveformOption.value} value={waveformOption.value}>
-              {waveformOption.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {!stageError && (
-        <div className="absolute top-[92px] left-3 z-30 inline-flex min-h-8 max-w-[calc(100%_-_7rem)] items-center gap-2 rounded-md border border-[#75dfd2]/20 bg-[#07111f]/88 px-3 py-1.5 font-mono text-[10px] text-white/65 backdrop-blur sm:top-[92px] sm:left-4 sm:max-w-sm sm:text-xs">
-          {sessionStatus === 'starting' ? (
-            <LoaderCircle className="size-3.5 shrink-0 animate-spin text-[#75dfd2]" />
-          ) : (
-            <span className="size-1.5 shrink-0 rounded-full bg-[#75dfd2]" />
-          )}
-          <span>{cameraStatusText}</span>
-        </div>
-      )}
-
-      <div className="absolute top-14 right-3 z-20 flex w-[72px] flex-col items-end gap-1 sm:top-16 sm:right-4">
-        <div className="flex w-full flex-col-reverse gap-[3px]">
-          {Array.from({ length: 8 }, (_, index) => (
-            <span
-              key={index}
-              className={cn(
-                'h-1.5 w-full rounded-[2px] bg-[#3a3428] sm:h-2',
-                index >= 8 - volumeBarCount && 'bg-[#e8a13d]'
-              )}
-            />
-          ))}
-        </div>
-        <span className="mt-1 font-mono text-[10px] text-[#e8a13d] sm:text-xs">
-          Filter: {readout.filterPercent > 0 ? '+' : ''}
-          {readout.filterPercent}%
-        </span>
-      </div>
-
-      {!stageError && (
-        <div className="absolute top-3 left-[160px] z-20 flex items-center gap-2 sm:top-4 sm:left-1/2 sm:-translate-x-1/2">
-          {recording ? (
-            <div className="flex h-9 items-center gap-2 rounded-md border border-red-400/30 bg-[#150c0d]/90 px-2 backdrop-blur">
-              <span className="size-2 animate-pulse rounded-full bg-red-500" />
-              <span className="w-11 font-mono text-xs text-white tabular-nums">
-                {formatDuration(recordingSeconds)}
-              </span>
-              <button
-                type="button"
-                onClick={() => void stopAndDownloadRecording('manual')}
-                disabled={recordingStopping}
-                className="grid size-7 place-items-center rounded text-red-300 transition-colors hover:bg-white/10 disabled:opacity-50"
-                aria-label="Stop and download recording"
-                title="Stop and download"
-              >
-                {recordingStopping ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Square className="size-3.5 fill-current" />
-                )}
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void startRecording()}
-              disabled={recordingStarting || !isTrackingActive}
-              className="grid size-9 place-items-center rounded-md border border-white/10 bg-[#07111f]/90 text-red-400 backdrop-blur transition-colors hover:bg-white/10 hover:text-red-300 disabled:cursor-wait disabled:opacity-65"
-              aria-label={
-                recordingStarting
-                  ? 'Requesting microphone access'
-                  : 'Start MP4 performance recording'
-              }
-              title={
-                !isTrackingActive
-                  ? 'Camera and hand tracking are still starting'
-                  : recordingStarting
-                    ? 'Allow microphone access to record'
-                    : 'Record performance display, microphone, and synth audio as MP4'
-              }
-            >
-              {recordingStarting ? (
-                <LoaderCircle className="size-4 animate-spin" />
-              ) : (
-                <Circle className="size-4 fill-current" />
-              )}
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="pointer-events-none absolute right-20 bottom-3 left-20 z-20 flex flex-col items-center gap-1 font-mono text-[#e8a13d] sm:bottom-4">
-        <span className="text-xs font-bold drop-shadow-[0_0_12px_rgba(232,161,61,0.65)]">
-          {readout.chord}
-        </span>
-        <span className="text-[10px] sm:text-xs">{readout.quality}</span>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setHelpOpen(true)}
-        className="absolute bottom-3 left-3 z-30 grid size-10 place-items-center rounded-full bg-[#151515]/90 text-[#e8a13d] transition-colors hover:bg-[#221c15] sm:bottom-4 sm:left-4"
-        aria-label="Open gesture guide"
-        title="Gesture guide"
+    <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+      <div
+        ref={stageRef}
+        id="gesture-synth-stage"
+        tabIndex={-1}
+        className={cn(
+          'gesture-synth-stage relative isolate scroll-mt-24 overflow-hidden border border-[#e6d5b7]/45 bg-[#1e2922] text-[#fff8ef] shadow-[0_28px_68px_rgba(59,39,25,0.42)]',
+          expanded
+            ? 'fixed inset-3 z-[100] h-auto rounded-[14px] sm:inset-6'
+            : 'h-[clamp(430px,58vw,690px)] rounded-[14px]',
+          fullscreenActive && 'h-screen rounded-none border-0'
+        )}
       >
-        <HelpCircle className="size-5" />
-      </button>
+        <div ref={canvasContainerRef} className="absolute inset-0">
+          <video
+            ref={videoRef}
+            className={cn(
+              'absolute inset-0 size-full scale-x-[-1] object-cover transition-opacity duration-300 motion-reduce:transition-none',
+              isTrackingActive ? 'opacity-0' : 'opacity-100'
+            )}
+            autoPlay
+            muted
+            playsInline
+          />
+          <canvas
+            ref={canvasRef}
+            data-testid="gesture-canvas"
+            className={cn(
+              'absolute inset-0 size-full transition-opacity duration-300 motion-reduce:transition-none',
+              isTrackingActive ? 'opacity-100' : 'opacity-0'
+            )}
+          />
+        </div>
 
-      {recordingFailure && (
-        <div
-          role="alert"
-          className="absolute right-3 bottom-3 left-16 z-40 flex min-h-10 items-center gap-2 rounded-md border border-amber-300/30 bg-[#1d1710]/95 px-3 py-2 text-xs text-amber-50 shadow-lg sm:right-4 sm:bottom-4 sm:left-auto sm:max-w-md"
-        >
-          <AlertTriangle className="size-4 shrink-0 text-amber-300" />
-          <span className="min-w-0 flex-1">{recordingFailure}</span>
+        <div className="absolute top-3 right-3 z-30 flex items-center rounded-md border border-[#e7d5b7]/25 bg-[#18221c]/94 p-1 shadow-[0_6px_16px_rgba(0,0,0,0.22)] sm:top-4 sm:right-4">
           <button
             type="button"
-            onClick={() => setRecordingFailure(null)}
-            className="grid size-7 shrink-0 place-items-center rounded hover:bg-white/10"
-            aria-label="Dismiss message"
+            onClick={() => setExpanded((value) => !value)}
+            className="grid size-11 place-items-center rounded text-[#ded2c1] transition-colors hover:bg-[#f5eadb]/12 hover:text-[#fff9f0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0a06d] sm:size-10"
+            aria-label={expanded ? 'Restore synth size' : 'Expand synth'}
+            title={expanded ? 'Restore size' : 'Expand'}
           >
-            <X className="size-4" />
+            {expanded ? (
+              <Minimize2 className="size-4" />
+            ) : (
+              <Expand className="size-4" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => void toggleFullscreen()}
+            className="grid size-11 place-items-center rounded text-[#ded2c1] transition-colors hover:bg-[#f5eadb]/12 hover:text-[#fff9f0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0a06d] sm:size-10"
+            aria-label={
+              fullscreenActive ? 'Exit fullscreen' : 'Open fullscreen'
+            }
+            title={fullscreenActive ? 'Exit fullscreen' : 'Fullscreen'}
+          >
+            {fullscreenActive ? (
+              <Minimize2 className="size-4" />
+            ) : (
+              <Fullscreen className="size-4" />
+            )}
           </button>
         </div>
-      )}
 
-      {cameraReady &&
-        sessionStatus !== 'error' &&
-        audioStatus !== 'ready' &&
-        !recordingFailure && (
-          <div className="absolute inset-0 z-40 grid place-items-center bg-[#061a24]/20 p-5">
+        <div className="absolute top-3 left-3 z-20 flex w-[132px] flex-col gap-2 sm:top-4 sm:left-4 sm:w-[148px]">
+          <label className="sr-only" htmlFor="gesture-synth-key">
+            Musical key
+          </label>
+          <select
+            id="gesture-synth-key"
+            value={selectedKeyName}
+            onChange={(event) =>
+              setSelectedKeyName(event.target.value as KeyOption['name'])
+            }
+            className="h-11 rounded-md border border-[#8e7154]/75 bg-[#1a211c]/96 px-2 font-mono text-xs text-[#e0a06d] transition-colors outline-none focus:border-[#edbd85] sm:h-8 sm:text-sm"
+          >
+            {KEY_OPTIONS.map((keyOption) => (
+              <option key={keyOption.name} value={keyOption.name}>
+                Key: {keyOption.label}
+              </option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor="gesture-synth-waveform">
+            Synth waveform
+          </label>
+          <select
+            id="gesture-synth-waveform"
+            value={waveform}
+            onChange={(event) =>
+              setWaveform(event.target.value as OscillatorType)
+            }
+            className="h-11 rounded-md border border-[#8e7154]/75 bg-[#1a211c]/96 px-2 font-mono text-xs text-[#e0a06d] transition-colors outline-none focus:border-[#edbd85] sm:h-8 sm:text-sm"
+          >
+            {WAVEFORM_OPTIONS.map((waveformOption) => (
+              <option key={waveformOption.value} value={waveformOption.value}>
+                {waveformOption.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {!stageError && (
+          <div className="absolute top-[124px] left-3 z-30 inline-flex min-h-8 max-w-[calc(100%_-_7rem)] items-center gap-2 rounded-md border border-[#e3d4bb]/20 bg-[#18221c]/94 px-3 py-1.5 font-mono text-[10px] text-[#ded2c1] shadow-[0_6px_16px_rgba(0,0,0,0.2)] sm:top-[92px] sm:left-4 sm:max-w-sm sm:text-xs">
+            {sessionStatus === 'starting' ? (
+              <LoaderCircle className="size-3.5 shrink-0 animate-spin text-[#dfaa73]" />
+            ) : (
+              <span className="size-1.5 shrink-0 rounded-full bg-[#c7bd8f]" />
+            )}
+            <span>{cameraStatusText}</span>
+          </div>
+        )}
+
+        {!showCameraHelp && (
+          <div className="absolute top-14 right-3 z-20 flex w-[72px] flex-col items-end gap-1 sm:top-16 sm:right-4">
+            <div className="flex w-full flex-col-reverse gap-[3px]">
+              {Array.from({ length: 8 }, (_, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    'h-1.5 w-full rounded-[2px] bg-[#4c4a3d] sm:h-2',
+                    index >= 8 - volumeBarCount && 'bg-[#dba36d]'
+                  )}
+                />
+              ))}
+            </div>
+            <span className="mt-1 font-mono text-[11px] text-[#dfaa73] sm:text-xs">
+              Filter: {readout.filterPercent > 0 ? '+' : ''}
+              {readout.filterPercent}%
+            </span>
+          </div>
+        )}
+
+        {!stageError && (
+          <div className="absolute top-3 left-[160px] z-20 flex items-center gap-2 sm:top-4 sm:left-1/2 sm:-translate-x-1/2">
+            {recording ? (
+              <div className="flex min-h-11 items-center gap-2 rounded-md border border-red-300/35 bg-[#351b19]/94 px-2 shadow-[0_6px_16px_rgba(0,0,0,0.22)] sm:min-h-9">
+                <span className="size-2 animate-pulse rounded-full bg-red-500" />
+                <span className="w-11 font-mono text-xs text-[#fff6ef] tabular-nums">
+                  {formatDuration(recordingSeconds)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void stopAndDownloadRecording('manual')}
+                  disabled={recordingStopping}
+                  className="grid size-11 place-items-center rounded text-red-200 transition-colors hover:bg-[#fff3e7]/10 disabled:opacity-50 sm:size-10"
+                  aria-label="Stop and download recording"
+                  title="Stop and download"
+                >
+                  {recordingStopping ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Square className="size-3.5 fill-current" />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void startRecording()}
+                disabled={recordingStarting || !isTrackingActive}
+                className="grid size-11 place-items-center rounded-md border border-[#e7d5b7]/25 bg-[#18221c]/94 text-red-400 shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors hover:bg-[#33241e] hover:text-red-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0a06d] disabled:cursor-wait disabled:opacity-65 sm:size-10"
+                aria-label={
+                  recordingStarting
+                    ? 'Requesting microphone access'
+                    : 'Start MP4 performance recording'
+                }
+                title={
+                  !isTrackingActive
+                    ? 'Camera and hand tracking are still starting'
+                    : recordingStarting
+                      ? 'Allow microphone access to record'
+                      : 'Record performance display, microphone, and synth audio as MP4'
+                }
+              >
+                {recordingStarting ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Circle className="size-4 fill-current" />
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {!showCameraHelp && (
+          <div className="pointer-events-none absolute right-20 bottom-3 left-20 z-20 flex flex-col items-center gap-1 font-mono text-[#e4b179] sm:bottom-4">
+            <span className="text-xs font-bold drop-shadow-[0_2px_10px_rgba(68,37,22,0.72)]">
+              {readout.chord}
+            </span>
+            <span className="text-[11px] sm:text-xs">{readout.quality}</span>
+          </div>
+        )}
+
+        <DialogTrigger
+          ref={gestureGuideTriggerRef}
+          className="absolute bottom-3 left-3 z-30 grid size-11 place-items-center rounded-full border border-[#e7d5b7]/25 bg-[#18221c]/94 text-[#e0a06d] shadow-[0_6px_16px_rgba(0,0,0,0.22)] transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-[#33241e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0a06d] active:translate-y-0 sm:bottom-4 sm:left-4 sm:size-10"
+          aria-label="Open gesture guide"
+          title="Gesture guide"
+        >
+          <HelpCircle className="size-5" />
+        </DialogTrigger>
+
+        {recordingFailure && (
+          <div
+            role="alert"
+            className="absolute right-3 bottom-3 left-16 z-40 flex min-h-10 items-center gap-2 rounded-md border border-[#e4b179]/45 bg-[#38271d]/96 px-3 py-2 text-xs text-[#fff1df] shadow-[0_12px_28px_rgba(0,0,0,0.32)] sm:right-4 sm:bottom-4 sm:left-auto sm:max-w-md"
+          >
+            <AlertTriangle className="size-4 shrink-0 text-[#e7b375]" />
+            <span className="min-w-0 flex-1">{recordingFailure}</span>
             <button
               type="button"
-              onClick={() => void enableAudio()}
-              disabled={audioStatus === 'starting'}
-              className={cn(
-                'grid size-20 place-items-center rounded-full border border-[#ffe1a7]/65 bg-[#e8a13d]/45 text-[#fff5e3] shadow-[0_0_0_1px_rgba(8,18,24,0.12),0_14px_36px_rgba(0,0,0,0.3)] backdrop-blur-[2px] transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-1 hover:scale-[1.06] hover:border-[#fff0c9]/90 hover:bg-[#e8a13d]/75 hover:shadow-[0_0_0_8px_rgba(232,161,61,0.16),0_22px_44px_rgba(0,0,0,0.42)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fff0c9] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-85 sm:size-24',
-                audioStatus === 'error' && 'border-amber-100/90 bg-[#c6761a]/65'
-              )}
-              aria-label={startPlayingLabel}
-              title={audioFailure ?? 'Enable browser sound and start playing'}
+              onClick={() => setRecordingFailure(null)}
+              className="grid size-11 shrink-0 place-items-center rounded transition-colors hover:bg-[#fff3e7]/10 sm:size-9"
+              aria-label="Dismiss message"
             >
-              {audioStatus === 'starting' ? (
-                <LoaderCircle className="size-8 animate-spin sm:size-9" />
-              ) : (
-                <Play
-                  className="ml-1 size-8 fill-current sm:size-9"
-                  aria-hidden="true"
-                />
-              )}
+              <X className="size-4" />
             </button>
           </div>
         )}
 
-      {stageError && (
-        <div
-          role="alert"
-          className="absolute top-[92px] right-3 left-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-amber-300/30 bg-[#15110d]/94 px-3 py-3 text-left text-xs text-amber-50 shadow-lg backdrop-blur sm:top-4 sm:right-auto sm:left-1/2 sm:w-[min(620px,calc(100%_-_12rem))] sm:-translate-x-1/2"
-        >
-          <AlertTriangle className="size-4 shrink-0 text-amber-300" />
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold">{stageError.title}</p>
-            <p className="mt-0.5 leading-5 text-white/60">
-              {stageError.message}
-            </p>
-          </div>
-          {showCameraHelp && (
-            <Link
-              href="/camera-permission-help"
-              className="font-semibold text-[#75dfd2] transition-colors hover:text-[#95eee4]"
+        {((cameraReady && sessionStatus !== 'error') || showCameraHelp) &&
+          audioStatus !== 'ready' &&
+          !recordingFailure && (
+            <div
+              className={cn(
+                'absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-[#172019]/24 p-5',
+                showCameraHelp &&
+                  'justify-end pt-[18rem] pb-5 sm:justify-center sm:pt-5'
+              )}
             >
-              Camera help
-            </Link>
-          )}
-          <button
-            type="button"
-            onClick={() => void startSession('retry')}
-            className="inline-flex min-h-9 items-center gap-2 rounded-md bg-[#75dfd2] px-3 font-semibold text-[#061a24] transition-colors hover:bg-[#95eee4]"
-          >
-            <RotateCcw className="size-3.5" />
-            Try camera
-          </button>
-        </div>
-      )}
-
-      {helpOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="gesture-guide-title"
-          onClick={closeHelp}
-          className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
-        >
-          <div className="max-h-[88%] w-full max-w-2xl overflow-y-auto rounded-md border border-[#e8a13d] bg-[#151515] p-5 font-mono text-sm text-white shadow-2xl sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <h2
-                id="gesture-guide-title"
-                className="text-xl font-bold text-[#e8a13d]"
+              <button
+                id="gesture-synth-start"
+                type="button"
+                onClick={startPlaying}
+                disabled={audioStatus === 'starting'}
+                className={cn(
+                  'grid size-24 place-items-center rounded-full border border-[#f5d6ae]/80 bg-[#b95c33]/72 text-[#fff7ed] shadow-[0_0_0_5px_rgba(41,27,18,0.18),0_18px_36px_rgba(38,22,12,0.4)] transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-1 hover:scale-[1.05] hover:border-[#fff0d5] hover:bg-[#a84e29]/86 hover:shadow-[0_0_0_8px_rgba(198,117,71,0.2),0_24px_46px_rgba(38,22,12,0.48)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ffe0b7] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-85 sm:size-32',
+                  audioStatus === 'error' && 'border-[#ffe0b7] bg-[#974523]/82'
+                )}
+                aria-label={startPlayingLabel}
+                aria-describedby="gesture-synth-start-hint"
+                title={
+                  audioFailure ??
+                  (showCameraHelp
+                    ? 'Retry camera access and enable browser sound'
+                    : 'Enable browser sound and start playing')
+                }
               >
-                Gesture Synth Guide
-              </h2>
+                {audioStatus === 'starting' ? (
+                  <LoaderCircle className="size-8 animate-spin sm:size-9" />
+                ) : (
+                  <Play
+                    className="ml-1 size-8 fill-current sm:size-9"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+              <span
+                id="gesture-synth-start-hint"
+                aria-live="polite"
+                className="max-w-[16rem] text-center text-xs font-semibold text-[#fff1df] drop-shadow-[0_2px_8px_rgba(38,22,12,0.72)]"
+              >
+                {startPlayingCaption}
+              </span>
+            </div>
+          )}
+
+        {stageError && (
+          <div
+            role="alert"
+            className="absolute top-[124px] right-3 left-3 z-40 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-3 rounded-md border border-[#e4b179]/45 bg-[#38271d]/96 px-3 py-3 text-left text-xs text-[#fff1df] shadow-[0_12px_28px_rgba(0,0,0,0.32)] sm:top-4 sm:right-auto sm:left-1/2 sm:flex sm:w-[min(620px,calc(100%_-_12rem))] sm:-translate-x-1/2 sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-2"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#e7b375] sm:mt-0" />
+            <div className="col-start-2 min-w-0 sm:flex-1">
+              <p className="font-semibold">{stageError.title}</p>
+              <p className="mt-0.5 leading-5 text-[#eadfce]">
+                {stageError.message}
+              </p>
+            </div>
+            {showCameraHelp && (
+              <Link
+                href="/camera-permission-help"
+                className="col-start-2 inline-flex min-h-11 w-fit items-center font-semibold text-[#f2c38d] transition-colors hover:text-[#ffdfb6] sm:col-start-auto sm:min-h-9"
+              >
+                Camera help
+              </Link>
+            )}
+            {!showCameraHelp && (
               <button
                 type="button"
-                onClick={() => setHelpOpen(false)}
-                className="grid size-8 shrink-0 place-items-center rounded text-[#e8a13d] hover:bg-white/10"
+                onClick={() => void startSession('retry')}
+                className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#d9a36f] px-3 font-semibold text-[#262018] transition-colors hover:bg-[#edbd85] sm:col-span-1 sm:min-h-9 sm:justify-start"
+              >
+                <RotateCcw className="size-3.5" />
+                Restart synth
+              </button>
+            )}
+          </div>
+        )}
+
+        <DialogPortal container={stageRef.current}>
+          <DialogOverlay className="!absolute bg-[#111811]/82" />
+          <DialogPrimitive.Popup
+            initialFocus={gestureGuideCloseRef}
+            finalFocus={gestureGuideTriggerRef}
+            className="absolute top-1/2 left-1/2 z-50 grid max-h-[88%] w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[14px] border border-[#e4b179]/65 bg-[#1e2922] p-5 font-mono text-sm text-[#fff8ef] shadow-[0_24px_64px_rgba(0,0,0,0.5)] outline-none sm:p-6"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <DialogTitle className="font-serif text-2xl font-normal text-[#f0bd85]">
+                Gesture Synth Guide
+              </DialogTitle>
+              <DialogClose
+                ref={gestureGuideCloseRef}
+                className="grid size-11 shrink-0 place-items-center rounded text-[#e0a06d] transition-colors hover:bg-[#f5eadb]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0a06d] sm:size-10"
                 aria-label="Close gesture guide"
               >
                 <X className="size-5" />
-              </button>
+              </DialogClose>
             </div>
 
             <div className="mt-5 grid gap-7 sm:grid-cols-2">
               <section>
-                <h3 className="font-bold text-[#e8a13d]">Left Hand</h3>
+                <h3 className="font-bold text-[#e0a06d]">Left Hand</h3>
                 <p className="mt-3 leading-6">
                   <strong>Tilt</strong>
                   <br />
@@ -1492,7 +1590,7 @@ export function GestureSynthStage() {
               </section>
 
               <section>
-                <h3 className="font-bold text-[#e8a13d]">Right Hand</h3>
+                <h3 className="font-bold text-[#e0a06d]">Right Hand</h3>
                 <p className="mt-3 leading-6">
                   <strong>Fingers (Chord Quality)</strong>
                   <br />
@@ -1532,13 +1630,13 @@ export function GestureSynthStage() {
               href="https://www.instagram.com/p/DbH1BACxNCG/"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-flex text-[#e8a13d] underline-offset-4 hover:underline"
+              className="mt-6 inline-flex text-[#f0bd85] underline-offset-4 hover:underline"
             >
               Watch the original video tutorial
             </a>
-          </div>
-        </div>
-      )}
-    </div>
+          </DialogPrimitive.Popup>
+        </DialogPortal>
+      </div>
+    </Dialog>
   );
 }

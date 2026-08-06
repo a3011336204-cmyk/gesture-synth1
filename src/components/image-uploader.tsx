@@ -426,9 +426,9 @@ export function ImageUploader({
   return (
     <div
       className={cn(
-        'relative focus:outline-none',
+        'relative rounded-[6px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b95c33]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fffaf1] dark:focus-visible:ring-[#d87850]/35 dark:focus-visible:ring-offset-[#202b25]',
         isDragActive &&
-          'ring-primary/70 ring-offset-background ring-2 ring-offset-2',
+          'ring-2 ring-[#b95c33]/45 ring-offset-2 ring-offset-[#fffaf1] dark:ring-[#d87850]/45 dark:ring-offset-[#202b25]',
         className
       )}
       tabIndex={0}
@@ -439,8 +439,8 @@ export function ImageUploader({
       onDrop={handleDrop}
     >
       {isDragActive && (
-        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-          <div className="bg-background/80 text-foreground rounded-full px-4 py-2 text-sm font-medium shadow-sm">
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center rounded-[6px] border border-[#b95c33] bg-[#f8f2e9]/90 backdrop-blur-sm dark:border-[#d87850] dark:bg-[#202b25]/90">
+          <div className="rounded-[4px] border border-[#c6b299] bg-[#fffaf1] px-3 py-1.5 text-sm font-medium text-[#26352d] shadow-[0_2px_6px_rgba(57,48,36,0.12)] dark:border-[#526057] dark:bg-[#26322c] dark:text-[#f4eee4]">
             Drop to upload
           </div>
         </div>
@@ -455,11 +455,13 @@ export function ImageUploader({
       />
 
       {title && (
-        <div className="text-foreground mb-2 flex items-center justify-between text-sm font-medium">
+        <div className="mb-2 flex items-center justify-between text-sm font-semibold text-[#4f4034] dark:text-[#e7dcc9]">
           <div className="flex items-center gap-2">
-            <ImageIcon className="text-primary h-4 w-4" />
+            <ImageIcon className="h-4 w-4 text-[#a14d2e] dark:text-[#d87850]" />
             <span>{title}</span>
-            <span className="text-primary text-xs">({countLabel})</span>
+            <span className="text-xs text-[#a14d2e] dark:text-[#d87850]">
+              ({countLabel})
+            </span>
           </div>
         </div>
       )}
@@ -473,26 +475,26 @@ export function ImageUploader({
         {items.map((item) => (
           <div
             key={item.id}
-            className="group border-border bg-muted/50 hover:border-border hover:bg-muted relative overflow-hidden rounded-xl border p-1 shadow-sm transition"
+            className="group relative overflow-hidden rounded-[6px] border border-[#c6b299] bg-[#f8f2e9] p-1 shadow-[0_1px_3px_rgba(57,48,36,0.08)] transition-[background-color,border-color,box-shadow] hover:border-[#a99176] hover:bg-[#efe4d5] hover:shadow-[0_2px_6px_rgba(57,48,36,0.12)] dark:border-[#46534b] dark:bg-[#26322c] dark:hover:border-[#617168] dark:hover:bg-[#2b3831] dark:hover:shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
           >
-            <div className="relative overflow-hidden rounded-lg">
+            <div className="relative overflow-hidden rounded-[4px]">
               <img
                 src={item.preview}
                 alt="Preview"
-                className="h-32 w-32 rounded-lg object-cover"
+                className="h-32 w-32 rounded-[4px] object-cover"
               />
               {item.size && (
-                <span className="bg-background text-muted-foreground absolute bottom-2 left-2 rounded-md px-2 py-1 text-[10px] font-medium">
+                <span className="absolute bottom-1.5 left-1.5 rounded-[3px] border border-[#c6b299] bg-[#fffaf1]/95 px-1.5 py-0.5 text-[10px] font-medium text-[#5e493b] shadow-[0_1px_2px_rgba(57,48,36,0.1)] dark:border-[#526057] dark:bg-[#202b25]/95 dark:text-[#d6cbbd]">
                   {formatBytes(item.size)}
                 </span>
               )}
               {item.status !== 'uploading' && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#26352d]/50 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 dark:bg-black/55">
                   <Button
                     type="button"
                     size="icon"
                     variant="secondary"
-                    className="bg-background/50 text-foreground hover:bg-background/50 h-10 w-10 rounded-full shadow-sm backdrop-blur focus-visible:ring-2 focus-visible:ring-white/70"
+                    className="size-9 rounded-[5px] border border-[#fff7eb]/70 bg-[#fffaf1]/90 text-[#5e493b] shadow-[0_2px_5px_rgba(0,0,0,0.18)] backdrop-blur hover:bg-[#fffaf1] hover:text-[#26352d] focus-visible:border-[#fff7eb] focus-visible:ring-[#fff7eb]/45 dark:border-[#526057] dark:bg-[#26322c]/90 dark:text-[#f4eee4] dark:hover:bg-[#33433a]"
                     onClick={() => openReplacePicker(item.id)}
                     aria-label="Replace image"
                   >
@@ -501,12 +503,12 @@ export function ImageUploader({
                 </div>
               )}
               {item.status === 'uploading' && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 text-xs font-medium text-white">
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#26352d]/80 text-xs font-medium text-[#fff7eb] dark:bg-black/70">
                   Uploading...
                 </div>
               )}
               {item.status === 'error' && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-red-500/70 text-xs font-medium text-white">
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#98452d]/85 text-xs font-medium text-[#fff7eb] dark:bg-[#b85a3a]/85">
                   Failed
                 </div>
               )}
@@ -514,7 +516,7 @@ export function ImageUploader({
                 type="button"
                 size="icon"
                 variant="destructive"
-                className="absolute top-2 right-2 z-20 h-7 w-7"
+                className="absolute top-1.5 right-1.5 z-20 size-7 rounded-[4px] border border-[#fff7eb]/60 bg-[#7d3520]/90 text-[#fff7eb] shadow-[0_1px_3px_rgba(0,0,0,0.18)] hover:bg-[#672816] focus-visible:border-[#fff7eb] focus-visible:ring-[#fff7eb]/45 dark:border-[#ffc6ad]/50 dark:bg-[#914128]/90 dark:text-[#fff7eb] dark:hover:bg-[#a94f31]"
                 onClick={() => handleRemove(item.id)}
                 aria-label="Remove image"
               >
@@ -525,18 +527,20 @@ export function ImageUploader({
         ))}
 
         {items.length < maxCount && (
-          <div className="group border-border bg-muted/50 hover:border-border hover:bg-muted relative overflow-hidden rounded-xl border border-dashed p-1 shadow-sm transition">
-            <div className="relative overflow-hidden rounded-lg">
+          <div className="group relative overflow-hidden rounded-[6px] border border-dashed border-[#bca98f] bg-[#f8f2e9] p-1 transition-[background-color,border-color] hover:border-[#a14d2e] hover:bg-[#efe4d5] dark:border-[#617168] dark:bg-[#26322c] dark:hover:border-[#d87850] dark:hover:bg-[#2b3831]">
+            <div className="relative overflow-hidden rounded-[4px]">
               <button
                 type="button"
-                className="flex h-32 w-32 flex-col items-center justify-center gap-2"
+                className="flex h-32 w-32 flex-col items-center justify-center gap-2 rounded-[4px] text-[#5e493b] transition-colors hover:bg-[#e7dcc9] focus-visible:bg-[#e7dcc9] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#b95c33] dark:text-[#d6cbbd] dark:hover:bg-[#33433a] dark:focus-visible:bg-[#33433a] dark:focus-visible:outline-[#d87850]"
                 onClick={openFilePicker}
               >
-                <div className="border-border flex h-10 w-10 items-center justify-center rounded-full border border-dashed">
-                  <Upload className="h-5 w-5" />
+                <div className="flex size-9 items-center justify-center rounded-[4px] border border-dashed border-[#a99176] bg-[#fffaf1] text-[#a14d2e] dark:border-[#617168] dark:bg-[#202b25] dark:text-[#d87850]">
+                  <Upload className="size-4" />
                 </div>
                 <span className="text-xs font-medium">Upload</span>
-                <span className="text-primary text-xs">Max {maxSizeMB}MB</span>
+                <span className="text-xs text-[#a14d2e] dark:text-[#d87850]">
+                  Max {maxSizeMB}MB
+                </span>
               </button>
             </div>
           </div>
@@ -544,7 +548,9 @@ export function ImageUploader({
       </div>
 
       {!title && emptyHint && (
-        <div className="text-muted-foreground mt-2 text-xs">{emptyHint}</div>
+        <div className="mt-2 text-xs leading-5 text-[#786b5b] dark:text-[#c8c1b5]">
+          {emptyHint}
+        </div>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { getAuth } from '@/core/auth';
 import { getBalance, getHistory } from '@/modules/credits/service';
 import { respData, respErr } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 async function GET({ request }: { request: Request }) {
   try {
@@ -11,6 +12,9 @@ async function GET({ request }: { request: Request }) {
 
     if (!session?.user) {
       return respErr('Unauthorized');
+    }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
     }
 
     const [balance, history] = await Promise.all([

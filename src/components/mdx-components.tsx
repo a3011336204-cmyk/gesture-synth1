@@ -7,7 +7,7 @@ export const mdxComponents: MDXComponents = {
   h1: ({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
     <h1
       className={cn(
-        'text-foreground mt-6 mb-2 text-xl font-semibold tracking-tight md:text-2xl',
+        'mt-8 mb-3 font-serif text-2xl font-bold text-[#26352d] md:text-3xl dark:text-[#f4eee4]',
         className
       )}
       {...props}
@@ -16,7 +16,7 @@ export const mdxComponents: MDXComponents = {
   h2: ({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
     <h2
       className={cn(
-        'text-foreground mt-6 mb-2 text-lg font-semibold tracking-tight md:text-xl',
+        'mt-8 mb-3 border-l border-[#b95c33] pl-3 font-serif text-xl font-bold text-[#26352d] md:text-2xl dark:text-[#f4eee4]',
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ export const mdxComponents: MDXComponents = {
   h3: ({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
     <h3
       className={cn(
-        'text-foreground mt-4 mb-1.5 text-base font-semibold tracking-tight',
+        'mt-6 mb-2 font-serif text-lg font-bold text-[#26352d] dark:text-[#f4eee4]',
         className
       )}
       {...props}
@@ -33,14 +33,17 @@ export const mdxComponents: MDXComponents = {
   ),
   p: ({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) => (
     <p
-      className={cn('text-foreground/90 mt-2 leading-7', className)}
+      className={cn(
+        'mt-2 leading-7 text-[#393b32] dark:text-[#e7dcc9]',
+        className
+      )}
       {...props}
     />
   ),
   a: ({ className, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a
       className={cn(
-        'text-primary font-medium underline-offset-4 hover:underline',
+        'font-medium text-[#8d4327] underline-offset-4 hover:text-[#6e321e] hover:underline dark:text-[#d87850] dark:hover:text-[#f0a27d]',
         className
       )}
       {...props}
@@ -49,7 +52,7 @@ export const mdxComponents: MDXComponents = {
   ul: ({ className, ...props }: HTMLAttributes<HTMLUListElement>) => (
     <ul
       className={cn(
-        'marker:text-muted-foreground mt-2 ml-6 list-disc space-y-1',
+        'mt-2 ml-6 list-disc space-y-1 marker:text-[#b95c33]',
         className
       )}
       {...props}
@@ -58,25 +61,31 @@ export const mdxComponents: MDXComponents = {
   ol: ({ className, ...props }: HTMLAttributes<HTMLOListElement>) => (
     <ol
       className={cn(
-        'marker:text-muted-foreground mt-2 ml-6 list-decimal space-y-1',
+        'mt-2 ml-6 list-decimal space-y-1 marker:text-[#b95c33]',
         className
       )}
       {...props}
     />
   ),
   li: ({ className, ...props }: HTMLAttributes<HTMLLIElement>) => (
-    <li className={cn('text-foreground/90 leading-7', className)} {...props} />
+    <li
+      className={cn('leading-7 text-[#393b32] dark:text-[#e7dcc9]', className)}
+      {...props}
+    />
   ),
   strong: ({ className, ...props }: HTMLAttributes<HTMLElement>) => (
     <strong
-      className={cn('text-foreground font-semibold', className)}
+      className={cn(
+        'font-semibold text-[#26352d] dark:text-[#f4eee4]',
+        className
+      )}
       {...props}
     />
   ),
   blockquote: ({ className, ...props }: HTMLAttributes<HTMLQuoteElement>) => (
     <blockquote
       className={cn(
-        'border-border text-muted-foreground my-4 border-l-2 pl-4 italic',
+        'my-5 border-l border-[#b95c33] pl-4 font-serif text-[#615c51] italic dark:text-[#c8c1b5]',
         className
       )}
       {...props}
@@ -85,13 +94,13 @@ export const mdxComponents: MDXComponents = {
   code: ({ className, ...props }: HTMLAttributes<HTMLElement>) => (
     <code
       className={cn(
-        'bg-muted text-foreground rounded px-[0.4rem] py-[0.2rem] font-mono text-sm',
+        'rounded-none bg-[#e7dcc9] px-[0.4rem] py-[0.2rem] font-mono text-sm text-[#523e2e] dark:bg-[#33433a] dark:text-[#e7dcc9]',
         className
       )}
       {...props}
     />
   ),
   hr: ({ className, ...props }: HTMLAttributes<HTMLHRElement>) => (
-    <hr className={cn('border-border my-8', className)} {...props} />
+    <hr className={cn('my-8 border-[#cdb895]', className)} {...props} />
   ),
 };

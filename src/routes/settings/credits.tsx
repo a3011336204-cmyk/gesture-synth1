@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Coins } from 'lucide-react';
 
 import { tDynamic } from '@/core/i18n/dynamic';
-import { Link } from '@/core/i18n/navigation';
 import { apiGet, type PageResult } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { DataTable, type Column } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type CreditRow = {
@@ -134,28 +131,20 @@ function CreditsPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">{m['settings.credits.title']()}</h1>
-        <p className="text-muted-foreground">
-          {m['settings.credits.description']()}
-        </p>
+    <div className="studio-page">
+      <div className="studio-page-header">
+        <div>
+          <h1 className="studio-page-title">{m['settings.credits.title']()}</h1>
+          <p className="studio-page-description">
+            {m['settings.credits.description']()}
+          </p>
+        </div>
       </div>
 
       <Card className="max-w-md">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{m['settings.credits.balance']()}</CardTitle>
-            <Link
-              href="/pricing"
-              className={cn(
-                buttonVariants({ variant: 'outline', size: 'sm' }),
-                'gap-2'
-              )}
-            >
-              <Coins className="size-4" />
-              {m['settings.credits.purchase']()}
-            </Link>
           </div>
         </CardHeader>
         <CardContent>
@@ -165,10 +154,13 @@ function CreditsPage() {
         </CardContent>
       </Card>
 
-      <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div className="studio-page-tabs">
         {TABS.map((tb) => (
           <button
             key={tb}
+            type="button"
+            aria-pressed={tab === tb}
+            data-active={tab === tb}
             onClick={() => setTab(tb)}
             className={cn(
               '-mb-px border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
@@ -182,24 +174,20 @@ function CreditsPage() {
         ))}
       </div>
 
-      <Card>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={rows}
-            total={total}
-            page={page}
-            pageSize={PAGE_SIZE}
-            onPageChange={setPage}
-            rowKey={(r) => r.id}
-            emptyText={m['settings.credits.no_records']()}
-            search={search}
-            onSearchChange={setSearch}
-            onRefresh={() => query.refetch()}
-            loading={query.isFetching}
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={rows}
+        total={total}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        rowKey={(r) => r.id}
+        emptyText={m['settings.credits.no_records']()}
+        search={search}
+        onSearchChange={setSearch}
+        onRefresh={() => query.refetch()}
+        loading={query.isFetching}
+      />
     </div>
   );
 }

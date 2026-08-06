@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { getAuth } from '@/core/auth';
 import * as apikeys from '@/modules/apikeys/service';
 import { respData, respErr, respOk, respPage } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 async function GET({ request }: { request: Request }) {
   try {
@@ -11,6 +12,9 @@ async function GET({ request }: { request: Request }) {
 
     if (!session?.user) {
       return respErr('Unauthorized');
+    }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
     }
 
     const { searchParams } = new URL(request.url);
@@ -41,6 +45,9 @@ async function POST({ request }: { request: Request }) {
     if (!session?.user) {
       return respErr('Unauthorized');
     }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
+    }
 
     const body = await request.json();
     const { title } = body;
@@ -67,6 +74,9 @@ async function DELETE({ request }: { request: Request }) {
 
     if (!session?.user) {
       return respErr('Unauthorized');
+    }
+    if (!(await isUserEntitled(session.user.id))) {
+      return respErr('Invite redemption required');
     }
 
     const { searchParams } = new URL(request.url);

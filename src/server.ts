@@ -27,6 +27,29 @@ const CONTENT_SECURITY_POLICY = [
   "frame-src 'self' https:",
 ].join('; ');
 
+const NOINDEX_ROUTE_PREFIXES = [
+  '/admin',
+  '/settings',
+  '/api',
+  '/sign-in',
+  '/sign-up',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/auth-callback',
+  '/redeem-invite',
+] as const;
+
+function isNoindexRoute(pathname: string): boolean {
+  // Paraglide may prefix a localized URL (for example, /zh/settings). Keep
+  // the response-level rule aligned with the route-level metadata in either
+  // form.
+  const routePath = pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '') || '/';
+  return NOINDEX_ROUTE_PREFIXES.some(
+    (prefix) => routePath === prefix || routePath.startsWith(`${prefix}/`)
+  );
+}
+
 function setSecurityHeaders(response: Response, request: Request): void {
   response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -36,6 +59,10 @@ function setSecurityHeaders(response: Response, request: Request): void {
     'Permissions-Policy',
     'camera=(self), microphone=(self), geolocation=(), payment=(), usb=()'
   );
+
+  if (isNoindexRoute(new URL(request.url).pathname)) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
 
   if (new URL(request.url).protocol === 'https:') {
     response.headers.set(

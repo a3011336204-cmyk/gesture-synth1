@@ -9,11 +9,15 @@ import {
   updateTicketStatus,
 } from '@/modules/tickets/service';
 import { respData, respErr, respOk } from '@/lib/resp';
+import { isUserEntitled } from '@/lib/user-entitlement';
 
 async function getOwnedTicket(request: Request, id: string) {
   const auth = getAuth();
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) throw new Error('Unauthorized');
+  if (!(await isUserEntitled(session.user.id))) {
+    throw new Error('Invite redemption required');
+  }
   const row = await getTicketById(id);
   if (!row || row.userId !== session.user.id)
     throw new Error('Ticket not found');

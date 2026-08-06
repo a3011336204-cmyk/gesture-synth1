@@ -17,7 +17,9 @@ const CACHE_TTL = 3600_000; // 1 hour
 /**
  * Get all configs from database.
  */
-export async function getDbConfigs(): Promise<ConfigMap> {
+export async function getDbConfigs(
+  options: { failOnError?: boolean } = {}
+): Promise<ConfigMap> {
   const now = Date.now();
   if (cachedConfigs && now - cacheTime < CACHE_TTL) {
     return cachedConfigs;
@@ -49,7 +51,11 @@ export async function getDbConfigs(): Promise<ConfigMap> {
     cachedConfigs = result;
     cacheTime = now;
     return result;
-  } catch {
+  } catch (error) {
+    if (options.failOnError) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Unable to load database configuration: ${reason}`);
+    }
     return {};
   }
 }
@@ -166,8 +172,14 @@ export async function saveConfigs(configs: ConfigMap) {
 /**
  * Get a single config value.
  */
-export async function getConfig(name: string): Promise<string | undefined> {
-  const configs = await getAllConfigs();
+export async function getConfig(
+  name: string,
+  options: { failOnDatabaseError?: boolean } = {}
+): Promise<string | undefined> {
+  const dbConfigs = await getDbConfigs({
+    failOnError: options.failOnDatabaseError,
+  });
+  const configs = { ...envConfigs, ...dbConfigs };
   return configs[name];
 }
 

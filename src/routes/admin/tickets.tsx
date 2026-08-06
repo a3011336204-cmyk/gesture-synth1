@@ -260,6 +260,7 @@ function AdminTicketsPage() {
           size="icon"
           className="size-7"
           onClick={() => openDetail(r)}
+          aria-label={m['admin.tickets.open_detail']({ title: r.title })}
         >
           <MessageSquare className="size-4" />
         </Button>
@@ -268,24 +269,32 @@ function AdminTicketsPage() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">{m['admin.tickets.title']()}</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-7 bg-[#f4efe5] p-5 text-[#26352d] sm:p-6">
+      <div className="border-b border-[#b99f80] pb-5">
+        <h1 className="font-serif text-3xl leading-tight font-normal text-[#1d2a24]">
+          {m['admin.tickets.title']()}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#615c51]">
           {m['admin.tickets.description']()}
         </p>
       </div>
 
-      <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+      <div
+        role="group"
+        aria-label={m['admin.tickets.title']()}
+        className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-[#b99f80]"
+      >
         {TABS.map((tb) => (
           <button
             key={tb}
+            type="button"
+            aria-pressed={tab === tb}
             onClick={() => setTab(tb)}
             className={cn(
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+              '-mb-px border-b px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
               tab === tb
-                ? 'border-primary text-foreground'
-                : 'text-muted-foreground hover:text-foreground border-transparent'
+                ? 'border-[#b95c33] text-[#1d2a24]'
+                : 'border-transparent text-[#615c51] hover:text-[#8c4529]'
             )}
           >
             {tDynamic(`admin.tickets.tab_${tb}`)}
@@ -293,8 +302,8 @@ function AdminTicketsPage() {
         ))}
       </div>
 
-      <Card>
-        <CardContent>
+      <Card className="rounded-[8px] border-[#c6b299] bg-[#fffaf1] shadow-[0_8px_20px_rgba(57,48,36,0.08)]">
+        <CardContent className="p-4 sm:p-5">
           <DataTable
             columns={columns}
             data={rows}

@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { MDXProvider } from '@mdx-js/react';
-import { ArrowLeft } from 'lucide-react';
 
+import { Footer } from '@/blocks/footer';
+import { Header } from '@/blocks/header';
 import { mdxComponents } from '@/components/mdx-components';
 
 export const Route = createFileRoute('/(pages)')({
@@ -10,21 +11,22 @@ export const Route = createFileRoute('/(pages)')({
 
 function PagesLayout() {
   return (
-    <div className="min-h-screen bg-[#f4f8f7]">
-      <div className="mx-auto max-w-3xl px-5 pt-8 sm:px-8">
-        <a
-          href="/#play"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#137b75] hover:text-[#0b5550]"
-        >
-          <ArrowLeft className="size-4" />
-          Open Gesture Synth
-        </a>
-      </div>
-      <div className="mx-auto max-w-3xl px-5 pt-8 pb-16 sm:px-8 sm:pt-10 sm:pb-20">
-        <MDXProvider components={mdxComponents}>
-          <Outlet />
-        </MDXProvider>
-      </div>
+    <div className="min-h-screen overflow-x-clip bg-[#d6bc95] text-[#1d2a24] [&>header]:!sticky">
+      <Header />
+      <main className="relative min-h-[calc(100vh-76px)] bg-[#d6bc95] pt-px">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#9b6a42]"
+        />
+        <div className="relative mx-auto min-h-[calc(100vh-77px)] max-w-[1440px] border-x border-[#9b6a42]/55 bg-[#f4efe5]">
+          <div className="mx-auto max-w-5xl px-5 sm:px-8 lg:px-12">
+            <MDXProvider components={mdxComponents}>
+              <Outlet />
+            </MDXProvider>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }

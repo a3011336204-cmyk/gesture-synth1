@@ -101,7 +101,7 @@ function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: structuredDataJsonLd }}
       />
-      <div className="min-h-screen bg-[#f4f8f7] text-[#17292c]">
+      <div className="min-h-screen bg-[#f4eee4] text-[#1d2a24]">
         <Header />
         <main>
           <GestureSynthHome />

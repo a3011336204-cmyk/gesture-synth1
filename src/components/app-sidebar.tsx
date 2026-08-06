@@ -37,6 +37,43 @@ export interface NavItem {
   items?: NavSubItem[];
 }
 
+const sidebarMenuButtonClassName =
+  'rounded-md border border-transparent px-2.5 text-[#d5d5ca] transition-[background-color,border-color,color,transform] hover:bg-[#33433a] hover:text-[#fff7eb] focus-visible:ring-[#d87850] data-active:border-[#d87850] data-active:bg-[#a95230] data-active:text-[#fff7eb] data-active:shadow-[inset_0_1px_0_rgba(255,247,235,0.18)] active:translate-y-px';
+
+const sidebarSubMenuButtonClassName =
+  'rounded-md border border-transparent px-2 text-[#c8c8bd] hover:bg-[#33433a] hover:text-[#fff7eb] focus-visible:ring-[#d87850] data-active:border-[#d87850] data-active:bg-[#3d5045] data-active:text-[#fff7eb]';
+
+function readSidebarOpenItems(storageKey: string): string[] | null {
+  try {
+    const storedValue = localStorage.getItem(storageKey);
+    if (!storedValue) return null;
+
+    const parsedValue: unknown = JSON.parse(storedValue);
+    if (
+      !Array.isArray(parsedValue) ||
+      parsedValue.some((item) => typeof item !== 'string')
+    ) {
+      throw new TypeError(
+        `Expected an array of sidebar paths, received ${JSON.stringify(parsedValue)}`
+      );
+    }
+    return parsedValue;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(`Could not read sidebar state "${storageKey}": ${reason}`);
+    return null;
+  }
+}
+
+function writeSidebarOpenItems(storageKey: string, openItems: Set<string>) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify([...openItems]));
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(`Could not persist sidebar state "${storageKey}": ${reason}`);
+  }
+}
+
 export function AppSidebar({
   brand,
   brandHref = '/',
@@ -86,10 +123,7 @@ export function AppSidebar({
   const [openItems, setOpenItems] = useState<Set<string>>(activeParents);
 
   useEffect(() => {
-    let saved: string[] | null = null;
-    try {
-      saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-    } catch {}
+    const saved = readSidebarOpenItems(storageKey);
     setOpenItems(() => {
       const next = saved ? new Set(saved) : new Set<string>();
       for (const href of activeParents()) next.add(href);
@@ -119,138 +153,141 @@ export function AppSidebar({
       const next = new Set(prev);
       if (next.has(href)) next.delete(href);
       else next.add(href);
-      try {
-        localStorage.setItem(storageKey, JSON.stringify([...next]));
-      } catch {}
+      writeSidebarOpenItems(storageKey, next);
       return next;
     });
   }
 
   return (
     <Sidebar variant="inset">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <Link
-              href={brandHref}
-              className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm"
-            >
-              <span className="flex-1 font-serif text-lg leading-none italic">
-                {brand}
-              </span>
-            </Link>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      <div className="flex size-full min-h-0 flex-col bg-[#1d2a24] [--foreground:#f4eee4] [--muted-foreground:#b9b8ab] [--sidebar-accent-foreground:#fff7eb] [--sidebar-accent:#33433a] [--sidebar-border:#526057] [--sidebar-foreground:#f4eee4] [--sidebar-primary-foreground:#fff7eb] [--sidebar-primary:#a95230] [--sidebar-ring:#d87850] [--sidebar:#1d2a24]">
+        <SidebarHeader className="border-b border-[#526057] px-3 py-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <Link
+                href={brandHref}
+                className="group flex w-full items-center gap-3 rounded-md border border-transparent px-2.5 py-2 text-left transition-[background-color,border-color] hover:border-[#635849] hover:bg-[#27352f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d87850]"
+              >
+                <span className="min-w-0 flex-1">{brand}</span>
+              </Link>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
 
-      <SidebarContent>
-        {groups.map((group, gi) => (
-          <SidebarGroup key={gi}>
-            {group.label && (
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            )}
-            <SidebarGroupContent className="flex flex-col gap-2">
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
+        <SidebarContent className="px-1 py-2">
+          {groups.map((group, gi) => (
+            <SidebarGroup key={gi} className="px-2 py-1.5">
+              {group.label && (
+                <SidebarGroupLabel className="h-7 px-2.5 text-[11px] font-semibold text-[#b9b8ab]">
+                  {group.label}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent className="flex flex-col gap-1">
+                <SidebarMenu className="gap-1">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
 
-                  // Collapsible parent with sub-items.
-                  if (item.items?.length) {
-                    const open = openItems.has(item.href);
-                    const childActive = item.items.some((sub) =>
-                      isActiveHref(sub.href)
-                    );
+                    // Collapsible parent with sub-items.
+                    if (item.items?.length) {
+                      const open = openItems.has(item.href);
+                      const childActive = item.items.some((sub) =>
+                        isActiveHref(sub.href)
+                      );
+                      return (
+                        <SidebarMenuItem key={item.href}>
+                          <SidebarMenuButton
+                            tooltip={item.label}
+                            isActive={childActive}
+                            aria-expanded={open}
+                            className={sidebarMenuButtonClassName}
+                            onClick={() => toggleItem(item.href)}
+                          >
+                            <Icon className="text-[#c8bba7]" />
+                            <span>{item.label}</span>
+                            <ChevronRight
+                              className={`ml-auto size-4 shrink-0 text-[#b9b8ab] transition-transform ${
+                                open ? 'rotate-90' : ''
+                              }`}
+                            />
+                          </SidebarMenuButton>
+                          {open && (
+                            <SidebarMenuSub className="mx-4 border-[#526057] px-2 py-1">
+                              {item.items.map((sub) => (
+                                <SidebarMenuSubItem key={sub.href}>
+                                  <SidebarMenuSubButton
+                                    render={<Link href={sub.href} />}
+                                    isActive={isActiveHref(sub.href)}
+                                    className={sidebarSubMenuButtonClassName}
+                                  >
+                                    <span>{sub.label}</span>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          )}
+                        </SidebarMenuItem>
+                      );
+                    }
+
+                    // Plain link.
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
-                          tooltip={item.label}
-                          isActive={childActive && !open}
-                          aria-expanded={open}
-                          onClick={() => toggleItem(item.href)}
-                        >
-                          <Icon />
-                          <span>{item.label}</span>
-                          <ChevronRight
-                            className={`text-muted-foreground ml-auto size-4 shrink-0 transition-transform ${
-                              open ? 'rotate-90' : ''
-                            }`}
-                          />
-                        </SidebarMenuButton>
-                        {open && (
-                          <SidebarMenuSub>
-                            {item.items.map((sub) => (
-                              <SidebarMenuSubItem key={sub.href}>
-                                <SidebarMenuSubButton
-                                  render={<Link href={sub.href} />}
-                                  isActive={isActiveHref(sub.href)}
-                                >
-                                  <span>{sub.label}</span>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        )}
-                      </SidebarMenuItem>
-                    );
-                  }
-
-                  // Plain link.
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <Link href={item.href}>
-                        <SidebarMenuButton
+                          render={<Link href={item.href} />}
                           tooltip={item.label}
                           isActive={isActiveHref(item.href)}
+                          className={sidebarMenuButtonClassName}
                         >
-                          <Icon />
+                          <Icon className="text-[#c8bba7]" />
                           <span>{item.label}</span>
                         </SidebarMenuButton>
-                      </Link>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
 
-      <SidebarFooter>
-        {footerNavItems && footerNavItems.length > 0 && (
-          <SidebarMenu>
-            {footerNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.newTab
-                ? false
-                : item.href === '/'
-                  ? pathname === '/'
-                  : pathname.startsWith(item.href);
-              const button = (
-                <SidebarMenuButton tooltip={item.label} isActive={isActive}>
-                  <Icon />
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              );
-              return (
-                <SidebarMenuItem key={item.href}>
-                  {item.newTab ? (
-                    <a
-                      href={localizeHref(item.href)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+        <SidebarFooter className="border-t border-[#526057] px-3 py-3">
+          {footerNavItems && footerNavItems.length > 0 && (
+            <SidebarMenu className="gap-1">
+              {footerNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.newTab
+                  ? false
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      render={
+                        item.newTab ? (
+                          <a
+                            href={localizeHref(item.href)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          />
+                        ) : (
+                          <Link href={item.href} />
+                        )
+                      }
+                      tooltip={item.label}
+                      isActive={isActive}
+                      className={sidebarMenuButtonClassName}
                     >
-                      {button}
-                    </a>
-                  ) : (
-                    <Link href={item.href}>{button}</Link>
-                  )}
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        )}
-        {footer}
-      </SidebarFooter>
+                      <Icon className="text-[#c8bba7]" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          )}
+          {footer}
+        </SidebarFooter>
+      </div>
     </Sidebar>
   );
 }
