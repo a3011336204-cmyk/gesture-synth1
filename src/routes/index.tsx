@@ -13,6 +13,8 @@ function getAssetUrl(path: string) {
   return new URL(path, CANONICAL_SITE_URL).href;
 }
 
+export const TUTORIAL_VIDEO_UPLOAD_DATE = '2026-08-05T20:49:26+08:00';
+
 function HomePage() {
   const homepageUrl = getHomepageUrl();
   const socialImageUrl = getAssetUrl('/images/gesture-synth-hand-tracking.jpg');
@@ -83,7 +85,7 @@ function HomePage() {
         description:
           'A 95-second visual walkthrough of choosing a chord degree, changing major or minor, and adding right-hand voicing in Gesture Synth.',
         thumbnailUrl: tutorialPosterUrl,
-        uploadDate: '2026-08-05',
+        uploadDate: TUTORIAL_VIDEO_UPLOAD_DATE,
         duration: 'PT1M35.454S',
         contentUrl: tutorialVideoUrl,
         embedUrl: `${homepageUrl}#tutorial`,
