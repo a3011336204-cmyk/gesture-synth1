@@ -1,16 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { envConfigs } from '@/config';
+import { CANONICAL_SITE_URL, envConfigs } from '@/config';
 import { Footer } from '@/blocks/footer';
 import { FAQ_ITEMS, GestureSynthHome } from '@/blocks/gesture-synth-home';
 import { Header } from '@/blocks/header';
 
 function getHomepageUrl() {
-  return new URL('/', envConfigs.app_url).href;
+  return new URL('/', CANONICAL_SITE_URL).href;
 }
 
 function getAssetUrl(path: string) {
-  return new URL(path, envConfigs.app_url).href;
+  return new URL(path, CANONICAL_SITE_URL).href;
 }
 
 function HomePage() {
@@ -22,7 +22,7 @@ function HomePage() {
   const tutorialPosterUrl = getAssetUrl(
     '/images/gesture-synth-first-chord-tutorial-poster.jpg'
   );
-  const creatorUrl = new URL('/about', envConfigs.app_url).href;
+  const creatorUrl = new URL('/about', CANONICAL_SITE_URL).href;
   const structuredDataJsonLd = JSON.stringify({
     '@context': 'https://schema.org',
     '@graph': [

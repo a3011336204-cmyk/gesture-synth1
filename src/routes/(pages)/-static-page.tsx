@@ -3,7 +3,7 @@ import { notFound, useLoaderData } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
-import { envConfigs } from '@/config';
+import { CANONICAL_SITE_URL, envConfigs } from '@/config';
 
 type PageMeta = {
   title: string;
@@ -27,11 +27,11 @@ function loadPage(slug: string): PageModule | null {
 type LoaderData = { meta: PageMeta; slug: string };
 
 function getPageUrl(slug: string) {
-  return new URL(`/${slug}`, envConfigs.app_url).href;
+  return new URL(`/${slug}`, CANONICAL_SITE_URL).href;
 }
 
 function getSocialImageUrl() {
-  return new URL('/images/gesture-synth-hand-tracking.jpg', envConfigs.app_url)
+  return new URL('/images/gesture-synth-hand-tracking.jpg', CANONICAL_SITE_URL)
     .href;
 }
 
@@ -97,7 +97,7 @@ function StaticPage() {
     isPartOf: {
       '@type': 'WebSite',
       name: envConfigs.app_name,
-      url: new URL('/', envConfigs.app_url).href,
+      url: new URL('/', CANONICAL_SITE_URL).href,
     },
   }).replace(/</g, '\\u003c');
 

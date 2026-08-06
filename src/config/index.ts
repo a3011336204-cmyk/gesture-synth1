@@ -13,6 +13,8 @@ const procEnv: Record<string, string | undefined> =
 
 const publicEnv = (key: string) => metaEnv[key] ?? procEnv[key];
 
+export const CANONICAL_SITE_URL = 'https://www.gesturesynth.co';
+
 export const envConfigs: Record<string, string> = {
   // App (public)
   app_url: publicEnv('VITE_APP_URL') ?? 'http://localhost:3000',

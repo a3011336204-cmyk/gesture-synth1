@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { envConfigs } from '@/config';
+import { CANONICAL_SITE_URL, envConfigs } from '@/config';
 
 export const Route = createFileRoute('/llms-full.txt')({
   server: {
@@ -19,13 +19,13 @@ export const Route = createFileRoute('/llms-full.txt')({
           '',
           'No account, payment, database, media upload, or cloud recording is required.',
           '',
-          `How it works: ${envConfigs.app_url}/how-it-works`,
-          `Compatibility: ${envConfigs.app_url}/compatibility`,
-          `Camera permission help: ${envConfigs.app_url}/camera-permission-help`,
-          `About the creator: ${envConfigs.app_url}/about`,
-          `Contact: ${envConfigs.app_url}/contact`,
-          `Privacy: ${envConfigs.app_url}/privacy-policy`,
-          `Terms: ${envConfigs.app_url}/terms-of-service`,
+          `How it works: ${CANONICAL_SITE_URL}/how-it-works`,
+          `Compatibility: ${CANONICAL_SITE_URL}/compatibility`,
+          `Camera permission help: ${CANONICAL_SITE_URL}/camera-permission-help`,
+          `About the creator: ${CANONICAL_SITE_URL}/about`,
+          `Contact: ${CANONICAL_SITE_URL}/contact`,
+          `Privacy: ${CANONICAL_SITE_URL}/privacy-policy`,
+          `Terms: ${CANONICAL_SITE_URL}/terms-of-service`,
           '',
           'Primary references:',
           '- MediaPipe Hand Landmarker for web: https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/web_js',

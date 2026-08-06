@@ -271,7 +271,7 @@ export function GestureSynthHome() {
               id="tutorial-heading"
               className="max-w-xl font-serif text-4xl leading-[1.02] text-[#f7f0e4] sm:text-5xl"
             >
-              A short practice note for your first chord.
+              Learn your first Gesture Synth chord in 95 seconds.
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-[#d9d1c4]">
               Learn the gesture map in 95 seconds, then open the instrument
@@ -365,12 +365,12 @@ export function GestureSynthHome() {
                 A complete online gesture synthesizer, already in your browser
               </h2>
               <p className="mt-6 max-w-md text-base leading-7 text-[#5a564c]">
-                This online gesture synthesizer turns camera input into
-                responsive musical control without accounts, downloads, or
-                specialist hardware. Learn how hand tracking, browser support,
-                recording, and privacy work before you play. Practice a
-                progression, explore a sound, or sketch a musical idea from a
-                laptop browser.
+                Gesture Synth is a hand-tracking music tool that turns camera
+                input into responsive musical control without accounts,
+                downloads, or specialist hardware. Learn how hand tracking,
+                browser support, recording, and privacy work before you play.
+                Practice a progression, explore a sound, or sketch a musical
+                idea from a laptop browser.
               </p>
               <a
                 href="/how-it-works"
@@ -405,7 +405,7 @@ export function GestureSynthHome() {
           <div className="grid gap-8 lg:grid-cols-[1fr_0.72fr] lg:items-end lg:gap-16">
             <div className="max-w-3xl">
               <h2 className="font-serif text-4xl leading-[1.02] sm:text-5xl">
-                Your first chord, one movement at a time
+                Play your first Gesture Synth chord, one movement at a time
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#5c594f]">
@@ -558,7 +558,8 @@ export function GestureSynthHome() {
           <div className="mt-16 grid items-center gap-10 border-t border-[#c6b299] pt-16 lg:mt-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20 lg:pt-24">
             <div className="lg:order-2">
               <h2 className="max-w-xl font-serif text-4xl leading-[1.02] text-[#26352d] sm:text-5xl">
-                Record the idea locally, then decide what happens next
+                Record a Gesture Synth idea locally, then decide what happens
+                next
               </h2>
               <p className="mt-6 max-w-xl text-base leading-7 text-[#5a564c]">
                 Recording starts only when you choose it and may ask for
@@ -603,7 +604,7 @@ export function GestureSynthHome() {
         <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:gap-20 lg:px-12">
           <div>
             <h2 className="max-w-xl font-serif text-4xl leading-[1.02] text-[#f6eee0] sm:text-5xl">
-              Real-time music, computed locally
+              How this hand-tracking music tool works locally
             </h2>
             <p className="mt-6 max-w-xl text-base leading-7 text-[#d6cdc0]">
               MediaPipe estimates 21 landmarks per hand. A lightweight gesture
