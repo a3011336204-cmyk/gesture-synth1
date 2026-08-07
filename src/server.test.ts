@@ -16,6 +16,28 @@ describe('getCanonicalSiteRedirect', () => {
     );
   });
 
+  it('redirects the non-www host directly to the canonical origin', () => {
+    const response = getCanonicalSiteRedirect(
+      new Request('http://gesturesynth.co/robots.txt')
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get('location')).toBe(
+      'https://www.gesturesynth.co/robots.txt'
+    );
+  });
+
+  it('upgrades an HTTP request on the canonical hostname', () => {
+    const response = getCanonicalSiteRedirect(
+      new Request('http://www.gesturesynth.co/how-it-works')
+    );
+
+    expect(response?.status).toBe(308);
+    expect(response?.headers.get('location')).toBe(
+      'https://www.gesturesynth.co/how-it-works'
+    );
+  });
+
   it('does not redirect the canonical host or a similar hostname', () => {
     expect(
       getCanonicalSiteRedirect(new Request('https://www.gesturesynth.co/'))

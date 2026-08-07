@@ -14,7 +14,7 @@ export function Footer() {
               <span className="grid size-10 place-items-center border border-[#9b6a42] bg-[#e7dcc9] p-1 shadow-[0_10px_22px_rgba(0,0,0,0.24)] transition-transform duration-200 group-hover:-translate-y-0.5">
                 <img
                   src="/images/gesture-synth-logo.png"
-                  alt=""
+                  alt={`${envConfigs.app_name} logo`}
                   width={512}
                   height={512}
                   className="size-full object-contain"

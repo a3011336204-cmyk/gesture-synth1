@@ -41,11 +41,23 @@ const NOINDEX_ROUTE_PREFIXES = [
   '/redeem-invite',
 ] as const;
 
-const LEGACY_SITE_HOSTNAME = 'gesture-synth-five.vercel.app';
+const CANONICAL_SITE_HOSTNAME = new URL(CANONICAL_SITE_URL).hostname;
+const LEGACY_SITE_HOSTNAMES = new Set([
+  'gesture-synth-five.vercel.app',
+  'gesturesynth.co',
+]);
 
 export function getCanonicalSiteRedirect(request: Request): Response | null {
   const requestUrl = new URL(request.url);
-  if (requestUrl.hostname !== LEGACY_SITE_HOSTNAME) return null;
+  const isCanonicalHttpsRequest =
+    requestUrl.hostname === CANONICAL_SITE_HOSTNAME &&
+    requestUrl.protocol === 'https:';
+  const isKnownCanonicalAlias =
+    requestUrl.hostname === CANONICAL_SITE_HOSTNAME ||
+    LEGACY_SITE_HOSTNAMES.has(requestUrl.hostname);
+  if (isCanonicalHttpsRequest || !isKnownCanonicalAlias) {
+    return null;
+  }
 
   const redirectUrl = new URL(CANONICAL_SITE_URL);
   redirectUrl.pathname = requestUrl.pathname;
