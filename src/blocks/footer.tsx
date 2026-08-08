@@ -128,6 +128,22 @@ export function Footer() {
             play.
           </p>
         </div>
+
+        <div className="mt-6 flex justify-center">
+          <a
+            href="https://showmebest.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Featured on ShowMeBestAI"
+          >
+            <img
+              src="https://showmebest.ai/badge/feature-badge-white.webp"
+              alt="Featured on ShowMeBestAI"
+              width={220}
+              height={60}
+            />
+          </a>
+        </div>
       </div>
     </footer>
   );
